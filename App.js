@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up Piclink to start working on your!</Text>
+      <Text>Lutfen Benim Branch'im Gelsin. THX!</Text>
       <StatusBar style="auto" />
     </View>
   );
