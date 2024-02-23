@@ -5,7 +5,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text>Open up App.js to start working on your!</Text>
-      <Text>Deneme123123!</Text>
+      <Text>Deneme123</Text>
       <StatusBar style="auto" />
     </View>
   );
