@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>proje bitmistirrrr!</Text>
+      <Text>bu bir saldırıdır.!</Text>
       <StatusBar style="auto" />
     </View>
   );
