@@ -4,16 +4,17 @@ import { useNavigation } from '@react-navigation/native'
 import { firebase } from '../config'
 
 const login = () => {
-    const navigation = useNavigation()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const navigation = useNavigation() // Hook to access navigation object
+    const [email, setEmail] = useState('') // State for email input
+    const [password, setPassword] = useState('') // State for password input
 
+    // Function to handle user login
     loginUser = async (email, password) => {
         try{
-            await firebase.auth().signInWithEmailAndPassword(email,password)
+            await firebase.auth().signInWithEmailAndPassword(email,password) // Firebase authentication
 
         }catch (error){
-            alert(error.message)
+            alert(error.message) // Alerting error message if login fails
 
         }
     }
@@ -41,7 +42,7 @@ const login = () => {
                 />
             </View>
             <TouchableOpacity
-            onPress={() => loginUser(email, password)}
+            onPress={() => loginUser(email, password)} // Calling loginUser function on button press
             style={styles.button}
             >
                 <Text style={{fontWeight:'bold', fontSize:22}}>
@@ -49,7 +50,7 @@ const login = () => {
                 </Text>               
             </TouchableOpacity>
             <TouchableOpacity
-            onPress={()=>navigation.navigate('registration')}
+            onPress={()=>navigation.navigate('registration')} // Navigating to registration screen on button press
             style={{marginTop:20}}
             >
                 <Text style={{fontWeight:'bold', fontSize:16}}>

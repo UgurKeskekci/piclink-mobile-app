@@ -1,81 +1,40 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { Header, createStackNavigator } from '@react-navigation/stack';
 import React, {useState, useEffect} from 'react';
-import {firebase} from "./config"
+import {firebase} from "./config" // Assuming config file contains firebase initialization
 
+// Importing components and screens
 import login from './src/login';
 import registration from './src/registration';
 import dashboard from './src/dashboard';
-import header from './components/header';
-import {Stack} from "@react-navigation/stack";
+import header from './components/header'; // Assuming this is a custom header component
+import {Stack} from "@react-navigation/stack"; // Unused import
 import { TouchableOpacity, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator(); // Creating a stack navigator
 
-/*const Home = () => {
-    const todoRef = firebase.firestore().collection('newData');
-    const [addData, setAddData] = useState('');
-
-    const addField = () => {
-      if(addData && addData.length > 0){
-        const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-        const data = {
-          heading: addData,
-          createdAt: timestamp
-        };
-        todoRef
-          .add(data)
-          .then(()=>{
-            setAddData('');
-            Keyboard.dismiss();
-          })
-          .catch((erorr) => {
-            alert(error);
-          })
-
-      }
-    }
-
-    return(
-      <View style={{flex:1, justifyContent:'center'}}>
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder='Add some text'
-            placeholderTextColor='#aaaaaa'
-            onChangeText={(heading) => setAddData()}
-            value={addData}
-            multiline={true}
-            underlineColorAndroid='transparent'
-            autoCapitalize='none'
-          />
-          <TouchableOpacity style={styles.button} onPress={addField}>
-              <Text style={styles.buttonText}>Add</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    )
-}
-*/
-
-
+// Main app component
 function App() {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState();
+  const [initializing, setInitializing] = useState(true); // State to manage initialization
+  const [user, setUser] = useState(); // State to manage user authentication status
 
+  // Function to handle authentication state changes
   function onAuthStateChanged(user){
     setUser(user);
     if (initializing) setInitializing(false)
   }
 
+  // Effect hook to subscribe to authentication state changes
   useEffect(() => {
     const subscriber = firebase.auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
+    return subscriber; // Unsubscribing when component unmounts
   }, []);
 
+  // If still initializing, return null
   if (initializing) return null;
 
+  // If no user is authenticated, show login and registration screens
   if (!user){
     return(
       <Stack.Navigator>
@@ -91,6 +50,7 @@ function App() {
     )
   }
 
+  // If user is authenticated, show dashboard
   return(
     <Stack.Navigator>
       <Stack.Screen
@@ -101,6 +61,8 @@ function App() {
   );
   
 }
+
+// Root component wrapping App with NavigationContainer
 export default() => {
   return (
     <NavigationContainer>

@@ -1,7 +1,8 @@
-import firebase from 'firebase/compat/app'
-import 'firebase/compat/auth'
-import 'firebase/compat/firestore'
+import firebase from 'firebase/compat/app'; // Importing Firebase app
+import 'firebase/compat/auth'; // Importing Firebase authentication module
+import 'firebase/compat/firestore'; // Importing Firestore module
 
+// Firebase configuration object
 const firebaseConfig = {
     apiKey: "AIzaSyCigtHebWYDdLCvhJqjZqwHHOX1cYk_j4Y",
     authDomain: "deneme-e322e.firebaseapp.com",
@@ -12,9 +13,12 @@ const firebaseConfig = {
     measurementId: "G-PJG2FK8EK3"
 };
 
+// Initializing Firebase app if not already initialized
 if (!firebase.apps.length){
     firebase.initializeApp(firebaseConfig);
 }
 
-export { firebase };
+export { firebase }; // Exporting Firebase for use in other files
+
+
 
