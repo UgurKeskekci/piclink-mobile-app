@@ -23,7 +23,8 @@ function SignupScreen() {
       // Sending email verification
       const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
       await userCredential.user.sendEmailVerification();
-
+      // await sendEmailVerification(userCredential.user);
+      
       Alert.alert('Success', 'Verification email sent');
     } catch (error) {
       Alert.alert('Error', error.message);
