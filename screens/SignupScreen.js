@@ -3,15 +3,11 @@ import { Alert } from 'react-native';
 import firebase from 'firebase/app'; // Import Firebase
 import 'firebase/auth'; // Import Firebase Auth
 import 'firebase/firestore'; // Import Firestore
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import AuthContent from '../components/Auth/AuthContent';
 import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { AuthContext } from '../store/auth-context';
 import { createUser } from '../util/auth';
-import { firebaseConfig } from '../config';
-
-firebase.initializeApp(firebaseConfig);
 
 function SignupScreen() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -23,16 +19,21 @@ function SignupScreen() {
       // Create user with email and password
       const token = await createUser(email, password);
       authCtx.authenticate(token);
-
-      // Send email verification
-      const user = firebase.auth().currentUser;
-      await user.sendEmailVerification();
-
+      
+      // Sending email verification
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      await userCredential.user.sendEmailVerification();
+      // await sendEmailVerification(userCredential.user);
+      
       Alert.alert('Success', 'Verification email sent');
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
       setIsAuthenticating(false);
+      Alert.alert(
+        'Authentication failed',
+        'Could not create user, please check your input and try again later.'
+      );
     }
   };
 
