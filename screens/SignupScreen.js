@@ -19,22 +19,20 @@ function SignupScreen() {
       // Create user with email and password
       const token = await createUser(email, password);
       authCtx.authenticate(token);
-
+      
       // Sending email verification
-      await firebase.auth().createUserWithEmailAndPassword(email, password);
-      firebase.auth().currentUser.sendEmailVerification({
-        handleCodeInApp: true,
-        url: 'https://piclink-app.firebaseapp.com',
-      });
-
-      // Adding user details to Firestore after successful registration
-      await firebase.firestore().collection('users').doc(firebase.auth().currentUser.uid).set({ email });
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      await userCredential.user.sendEmailVerification();
 
       Alert.alert('Success', 'Verification email sent');
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
       setIsAuthenticating(false);
+      Alert.alert(
+        'Authentication failed',
+        'Could not create user, please check your input and try again later.'
+      );
     }
   };
 
