@@ -1,13 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { Alert } from 'react-native';
-import firebase from 'firebase/app'; // Import Firebase
-import 'firebase/auth'; // Import Firebase Auth
-import 'firebase/firestore'; // Import Firestore
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthContent from '../components/Auth/AuthContent';
 import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { AuthContext } from '../store/auth-context';
 import { createUser } from '../util/auth';
+import { firebase } from '../config';
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 
 function SignupScreen() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -17,24 +19,21 @@ function SignupScreen() {
     setIsAuthenticating(true);
     try {
       // Create user with email and password
-      const token = await createUser(email, password);
-      authCtx.authenticate(token);
-      
-      // Sending email verification
-      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-      await userCredential.user.sendEmailVerification();
-      // await sendEmailVerification(userCredential.user);
-      
+
+      // Send email verification
+      const auth = getAuth(); // Get the Firebase auth instance
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password); // Create user
+      const user = userCredential.user; // Get the user object from userCredential
+      await sendEmailVerification(user); // Send email verification
+
       Alert.alert('Success', 'Verification email sent');
     } catch (error) {
       Alert.alert('Error', error.message);
     } finally {
       setIsAuthenticating(false);
-      Alert.alert(
-        'Authentication failed',
-        'Could not create user, please check your input and try again later.'
-      );
     }
+    const token = await createUser(email, password);
+    authCtx.authenticate(token);
   };
 
   if (isAuthenticating) {
