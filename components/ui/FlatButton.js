@@ -15,6 +15,7 @@ function FlatButton({ children, onPress }) {
   );
 }
 
+
 export default FlatButton;
 
 const styles = StyleSheet.create({
@@ -27,6 +28,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     textAlign: 'center',
-    color: Colors.primary100,
+    color: 'black',
   },
 });
