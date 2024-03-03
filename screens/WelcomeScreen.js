@@ -1,12 +1,11 @@
 import axios from 'axios';
 import { useContext, useEffect, useState } from 'react';
-
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../store/auth-context';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 function WelcomeScreen() {
   const [fetchedMessage, setFetchedMesssage] = useState('');
-
   const authCtx = useContext(AuthContext);
   const token = authCtx.token;
 
@@ -23,14 +22,27 @@ function WelcomeScreen() {
 
   return (
     <View style={styles.rootContainer}>
-      <Text style={styles.title}>Welcome!</Text>
-      <Text>You authenticated successfully!</Text>
-      <Text>{fetchedMessage}</Text>
+      {/*  main content  */}
+      <Text>Welcome to the App!</Text>
+
+      {/* Bottom Navigation Bar */}
+      <View style={styles.bottomNavBar}>
+        <TouchableOpacity style={styles.navButton}>
+          <Icon name="home" size={30} color="blue" />
+          <Text>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Icon name="add" size={30} color="blue" />
+          <Text></Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton}>
+          <Icon name="person" size={30} color="blue" />
+          <Text>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
-export default WelcomeScreen;
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -39,9 +51,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
+
+
+  bottomNavBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: 'rgba(36, 96, 253, 0.10)',
+  },
+  navButton: {
+    alignItems: 'center',
   },
 });
+
+export default WelcomeScreen;
