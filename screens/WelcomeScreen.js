@@ -133,8 +133,8 @@ function WelcomeScreen() {
           <Icon name="home" size={30} color="blue" />
           <Text>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={toggleModal}>
-          <Icon name="add" size={30} color="blue" />
+        <TouchableOpacity style={[styles.navButton, styles.circleButton] } onPress={toggleModal}>
+          <Icon name="add" size={30} color="white" />
           <Text></Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
@@ -150,14 +150,14 @@ function WelcomeScreen() {
         onRequestClose={toggleModal}
       >
         <View style={styles.modalContainer}>
-          <Text>Create Event</Text>
-          <Text>Event Title</Text>
+          <Text style={styles.createEvent}>Create Event</Text>
+          <Text  style={styles.inputText}>Event Title</Text>
           <TextInput
             style={styles.input}
             placeholder="GetTogether, wedding, meeting"
             onChangeText={(text) => setEventName(text)}
           />
-          <Text>Event Description</Text>
+          <Text  style={styles.inputText}>Event Description</Text>
           <TextInput
             style={styles.input}
             placeholder="Share your moments!"
@@ -165,8 +165,9 @@ function WelcomeScreen() {
           />
 
           <View style={styles.switchContainer}>
-            <Text>Private Event</Text>
+            <Text style={styles.inputText}>Private Event</Text>
             <Switch
+              style={styles.onoffInput}
               trackColor={{ false: "#767577", true: "#81b0ff" }}
               thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
               ios_backgroundColor="#3e3e3e"
@@ -176,7 +177,7 @@ function WelcomeScreen() {
           </View>
 
           <View>
-            <Text>Add Event Profile Photo</Text>
+            <Text  style={styles.inputText}>Add Event Profile Photo</Text>
             <TouchableOpacity
             
               style={styles.eventPhoto}
@@ -197,8 +198,9 @@ function WelcomeScreen() {
           </View>
 
           <View style={styles.modalButtonsContainer}>
-            <Button title="Create" onPress={createEvent} />
-            <Button title="Cancel" onPress={toggleModal} />
+            <Button  style={styles.button} title="Cancel" onPress={toggleModal} />
+            <Button  style={styles.button} title="Create" onPress={createEvent} />
+            
           </View>
         </View>
       </Modal>
@@ -225,16 +227,41 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
     marginTop: 16,
+    
   },
+  
+  createEvent: {
+    fontSize: 30,
+    textAlign: "center",
+    margin: 30,
+  }
+  ,
   input: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
-    marginBottom: 16,
+    borderRadius: 30,
+    margin: 9,
     padding: 8,
     minWidth: 150,
     maxWidth: 150,
   },
+  inputText:{
+    fontSize: 14,
+    margin: 15,
+  },
+  onoffInput:{
+    marginLeft: 15,
+
+  },
+  eventPhoto:{
+    width: 90,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,.1)",
+    padding: 30,
+    margin: 15,
+  }
+  ,
   bottomNavBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -243,11 +270,23 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 90,
     backgroundColor: "rgba(36, 96, 253, 0.10)",
   },
   navButton: {
     alignItems: "center",
+   
+  },
+  circleButton: {
+    margin: 0,
+    padding: 0,
+    width: 65, // Example width
+    height: 65, // Example height
+    backgroundColor: "rgba(36, 96, 253, 1)",
+    borderRadius: 30, // Half of width and height to create a circle
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 90,
   },
   eventItem: {
     width: 100,
@@ -260,6 +299,7 @@ const styles = StyleSheet.create({
     margin: 10,
     backgroundColor: "rgba(36, 96, 253, 0.10)",
   },
+  
 });
 
 export default WelcomeScreen;
