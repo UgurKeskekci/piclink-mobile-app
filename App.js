@@ -5,15 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppLoading from 'expo-app-loading';
 
-
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
+import HomeScreen from './screens/HomeScreen';
 import { Colors } from './constants/styles';
 import AuthContextProvider, { AuthContext } from './store/auth-context';
 import IconButton from './components/ui/IconButton';
-
-
 
 const Stack = createNativeStackNavigator();
 
@@ -28,6 +26,7 @@ function AuthStack() {
     >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen}/>
     </Stack.Navigator>
   );
 }
@@ -43,8 +42,8 @@ function AuthenticatedStack() {
       }}
     >
       <Stack.Screen
-        name="Welcome"
-        component={WelcomeScreen}
+        name="Home"
+        component={HomeScreen}
         options={{
           headerRight: ({ tintColor }) => (
             <IconButton
@@ -65,14 +64,14 @@ function Navigation() {
 
   return (
     <NavigationContainer>
-      {!authCtx.isAuthenticated && <AuthStack />}
-      {authCtx.isAuthenticated && <AuthenticatedStack />}
+      {authCtx.isAuthenticated ? <AuthenticatedStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }
 
 function Root() {
   const [isTryingLogin, setIsTryingLogin] = useState(true);
+  const [isFirstStart, setIsFirstStart] = useState(true); // State to track first start
 
   const authCtx = useContext(AuthContext);
 
@@ -87,10 +86,21 @@ function Root() {
       setIsTryingLogin(false);
     }
 
+    async function checkFirstStart() {
+      const isFirst = await AsyncStorage.getItem('firstStart');
+      if (!isFirst) {
+        setIsFirstStart(true);
+        await AsyncStorage.setItem('firstStart', 'false');
+      } else {
+        setIsFirstStart(false);
+      }
+    }
+
     fetchToken();
+    checkFirstStart();
   }, []);
 
-  if (isTryingLogin) {
+  if (isTryingLogin || isFirstStart) {
     return <AppLoading />;
   }
 
@@ -98,7 +108,6 @@ function Root() {
 }
 
 export default function App() {
-  
   return (
     <>
       <StatusBar style="light" />
