@@ -46,7 +46,7 @@ function LoginScreen() {
         setIsAuthenticating(false);
         return;
       }
-  
+
       const token = await user.getIdToken();
       authCtx.authenticate(token);
     } catch (error) {
