@@ -5,7 +5,7 @@ import AuthContent from '../components/Auth/AuthContent';
 import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { AuthContext } from '../store/auth-context';
 import { login } from '../util/auth';
-import { getAuth,createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth,createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 function LoginScreen() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -33,7 +33,8 @@ function LoginScreen() {
     setIsAuthenticating(true);
     try {
       console.log('Logging in with email:', email); // Log email for debugging
-      const user = getAuth().currentUser;
+      const userCredential = await signInWithEmailAndPassword(getAuth(), email, password);
+      const user = userCredential.user;
       console.log(user)
       if (!user) {
         throw new Error('User not found');
