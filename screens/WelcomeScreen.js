@@ -16,6 +16,7 @@ import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 
+
 function WelcomeScreen() {
   const [fetchedMessage, setFetchedMesssage] = useState("");
   const authCtx = useContext(AuthContext);
@@ -134,7 +135,8 @@ function WelcomeScreen() {
           <Text>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.navButton, styles.circleButton] } onPress={toggleModal}>
-          <Icon name="add" size={40} color="white" />
+          <Icon name="add" size={30} color="white" />
+          <Text></Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
           <Icon name="person" size={30} color="blue" />
@@ -196,11 +198,11 @@ function WelcomeScreen() {
             </TouchableOpacity>
           </View>
 
-              <View style={styles.modalButtonsContainer}>
-                <Button  style={styles.button} title="Cancel" onPress={toggleModal} />
-                <Button  style={styles.button} title="Create" onPress={createEvent} />
-                
-              </View>
+          <View style={styles.modalButtonsContainer}>
+            <Button  style={styles.button} title="Cancel" onPress={toggleModal} />
+            <Button  style={styles.button} title="Create" onPress={createEvent} />
+            
+          </View>
         </View>
       </Modal>
     </View>
@@ -257,7 +259,6 @@ const styles = StyleSheet.create({
     width: 90,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,.1)",
-    borderRadius: 45,
     padding: 30,
     margin: 15,
   }
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     width: 65, // Example width
     height: 65, // Example height
     backgroundColor: "rgba(36, 96, 253, 1)",
-    borderRadius: 40, // Half of width and height to create a circle
+    borderRadius: 30, // Half of width and height to create a circle
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 90,
