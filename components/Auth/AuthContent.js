@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, View, Text, TouchableOpacity,Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FlatButton from '../ui/FlatButton';
 import AuthForm from './AuthForm';
@@ -53,6 +53,10 @@ function AuthContent({ isLogin, onAuthenticate }) {
 
   return (
     <View style={styles.authContent}>
+      <Image
+        style={styles.welcomeLogo}
+        source = {require('../../assets/welcome.png')}
+      />
       <AuthForm
         isLogin={isLogin}
         onSubmit={submitHandler}
@@ -74,7 +78,7 @@ export default AuthContent;
 
 const styles = StyleSheet.create({
   authContent: {
-    marginTop: '35%',
+    marginTop: '10%',
     marginHorizontal: 32,
     padding: 16,
     borderRadius: 8,
@@ -91,5 +95,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -100, // Adjust the value to move the text up or down
     alignSelf: 'center', // Center the text horizontally
+  },
+  welcomeLogo:{
+    width: 300,
+    height: 200,
   },
 });

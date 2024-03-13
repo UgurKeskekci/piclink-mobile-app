@@ -15,13 +15,19 @@ import {
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
+import 'firebase/compat/auth';
+import { firebase, db } from '../config';
+import { getF, collection, addDoc } from 'firebase/firestore';
+import { Firestore, getDocs } from "firebase/firestore";
+import { getAuth} from 'firebase/auth';
 
 
 function WelcomeScreen() {
   const [fetchedMessage, setFetchedMesssage] = useState("");
   const authCtx = useContext(AuthContext);
   const token = authCtx.token;
-
+  const userId = getAuth().currentUser ? getAuth().currentUser.uid : null; // Accessing current user's UID// Assuming you have a userId property in your authentication context
+  console.log(userId)
   const [isModalVisible, setModalVisible] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventName, setEventName] = useState("");
@@ -57,7 +63,20 @@ function WelcomeScreen() {
       console.error("ImagePicker Error:", error);
     }
   };
+  const addEventDataToFirestore = async (eventName, eventPhotoURI, userId) => {
+    try {
+      const docRef = await addDoc(collection(db, `users/${userId}/events`), {
+        name: eventName,
+        profilePhoto: eventPhotoURI,
+      });
+      console.log("Event added with ID: ", docRef.id);
+    } catch (error) {
+      console.error("Error adding event: ", error);
+    }
+  };
   
+  
+
   const createEvent = () => {
     const newEvent = {
       id: events.length + 1,
@@ -65,7 +84,7 @@ function WelcomeScreen() {
       description: eventDescription,
       profilePhoto: eventProfilePhoto,
     };
-  
+    addEventDataToFirestore(eventName, eventProfilePhoto, userId); // Pass userId here
     // Use setState callback to ensure the correct order of state updates
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setEventName("");
@@ -84,17 +103,33 @@ function WelcomeScreen() {
   
     toggleModal();
   };
-  
   useEffect(() => {
-    axios
-      .get(
-        "https://piclink-app-default-rtdb.europe-west1.firebasedatabase.app/message.json?auth=" +
-          token
-      )
-      .then((response) => {
-        setFetchedMesssage(response.data);
-      });
-  }, [token]);
+    const fetchEvents = async () => {
+      try {
+        const eventsQuery = collection(db, `users/${userId}/events`); // Adjust the collection path as per your database structure
+        const snapshot = await getDocs(eventsQuery);
+        const loadedEvents = [];
+  
+        snapshot.forEach((doc) => {
+          const eventData = doc.data();
+          const eventName = eventData.name; // Accessing the eventName from the event document
+          loadedEvents.push({
+            id: doc.id,
+            name: eventName,
+            ...eventData, // Include other event data if needed
+          });
+        });
+  
+        setEvents(loadedEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+  
+    fetchEvents();
+  }, []);
+  
+
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -104,29 +139,31 @@ function WelcomeScreen() {
 
   return (
     <View style={styles.rootContainer}>
-      {/*  main content  */}
-      <Text>Welcome to the App!</Text>
-
-      {/* Events in a Grid */}
       <FlatList
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={3}
-        renderItem={({ item }) => (
-          <View style={styles.eventItem}>
-            <Text>{item.name}</Text>
-            <Text>{item.description}</Text>
-            {item.profilePhoto ? (
-              <Image
-                source={{ uri: item.profilePhoto }}
-                style={{ width: 50, height: 50, borderRadius: 25 }}
-              />
-            ) : (
-              <Text>No Photo</Text>
-            )}
-          </View>
+  data={events}
+  keyExtractor={(item) => item.id.toString()}
+  numColumns={3}
+  renderItem={({ item }) => (
+    item ? (
+      <View style={styles.eventItem}>
+        <Text>{item.name}</Text>
+        <Text>{item.description}</Text>
+        {item.profilePhoto ? (
+          <Image
+            source={{ uri: item.profilePhoto }}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
+          />
+        ) : (
+          <Text>No Photo</Text>
         )}
-      />
+      </View>
+    ) : (
+      <View />
+    )
+  )}
+/>
+
+
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
