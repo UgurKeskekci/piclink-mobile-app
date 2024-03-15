@@ -10,7 +10,7 @@ import { createUser } from '../util/auth';
 import { firebase } from '../config';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 
-const EMAIL_VERIFICATION_TIMEOUT = 300000 * 1000;
+const EMAIL_VERIFICATION_TIMEOUT = 30 * 1000;
 
 
 function SignupScreen() {

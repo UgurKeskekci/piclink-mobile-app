@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, View, Text, TouchableOpacity,Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
 import FlatButton from '../ui/FlatButton';
 import AuthForm from './AuthForm';
 import { Colors } from '../../constants/styles';
@@ -54,6 +53,10 @@ function AuthContent({ isLogin, onAuthenticate }) {
 
   return (
     <View style={styles.authContent}>
+      <Image
+        style={styles.welcomeLogo}
+        source = {require('../../assets/welcome.png')}
+      />
       <AuthForm
         isLogin={isLogin}
         onSubmit={submitHandler}
@@ -63,6 +66,9 @@ function AuthContent({ isLogin, onAuthenticate }) {
         <FlatButton onPress={switchAuthModeHandler}>
           {isLogin ? 'Create a new user' : 'Log in instead'}
         </FlatButton>
+        <TouchableOpacity onPress={() => console.log('Continue as Guest')} style={styles.continueGuest}>
+          <Text style={{ textDecorationLine: 'underline' }}>Continue as Guest</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -72,11 +78,10 @@ export default AuthContent;
 
 const styles = StyleSheet.create({
   authContent: {
-    marginTop: '35%',
+    marginTop: '10%',
     marginHorizontal: 32,
     padding: 16,
     borderRadius: 8,
-
     elevation: 2,
     shadowColor: 'black',
     shadowOffset: { width: 1, height: 1 },
@@ -85,5 +90,14 @@ const styles = StyleSheet.create({
   },
   buttons: {
     marginTop: 8,
+  },
+  continueGuest: {
+    position: 'absolute',
+    bottom: -100, // Adjust the value to move the text up or down
+    alignSelf: 'center', // Center the text horizontally
+  },
+  welcomeLogo:{
+    width: 300,
+    height: 200,
   },
 });
