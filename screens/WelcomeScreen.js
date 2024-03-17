@@ -152,12 +152,11 @@ function WelcomeScreen() {
             >
               <Text>{item.name}</Text>
               <Text>{item.description}</Text>
-            
-                <Image
-                  source={{ uri: item.profilePhoto }}
-                  style={{ width: 98, height: 50, marginLeft: -12 }}
-                />
-           
+
+              <Image
+                source={{ uri: item.profilePhoto }}
+                style={{ width: 98, height: 50, marginLeft: -12 }}
+              />
             </TouchableOpacity>
           ) : (
             <View />
@@ -231,7 +230,7 @@ function WelcomeScreen() {
               style={styles.eventPhotoButton}
               onPress={handleImagePicker}
             >
-              {eventProfilePhoto && eventProfilePhoto.length  > 0 ? (
+              {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
                 <Image
                   source={{ uri: eventProfilePhoto }}
                   style={{ width: 70, height: 70, borderRadius: 50 }}
