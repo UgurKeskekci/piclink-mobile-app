@@ -17,12 +17,12 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import 'firebase/compat/auth';
 import { firebase, db } from '../config';
-import { getF, collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { Firestore, getDocs } from "firebase/firestore";
 import { getAuth} from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function WelcomeScreen() {
-  const [fetchedMessage, setFetchedMesssage] = useState("");
   const authCtx = useContext(AuthContext);
   const token = authCtx.token;
   const userId = getAuth().currentUser ? getAuth().currentUser.uid : null; // Accessing current user's UID// Assuming you have a userId property in your authentication context
@@ -32,7 +32,6 @@ function WelcomeScreen() {
   const [eventName, setEventName] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventProfilePhoto, setEventProfilePhoto] = useState(null); // New state for event profile photo
-
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
@@ -127,26 +126,22 @@ function WelcomeScreen() {
   
     fetchEvents();
   }, []);
-  
 
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
   };
 
-  
-
   return (
     <View style={styles.rootContainer}>
       <FlatList
-  data={events}
-  keyExtractor={(item) => item.id.toString()}
-  numColumns={3}
-  renderItem={({ item }) => (
-    item ? (
+       data={events}
+        keyExtractor={(item) => item.id.toString()}
+       numColumns={3}
+      renderItem={({ item }) => (
+        item ? (
       <View style={styles.eventItem}>
         <Text>{item.name}</Text>
-        <Text>{item.description}</Text>
         {item.profilePhoto ? (
           <Image
             source={{ uri: item.profilePhoto }}
