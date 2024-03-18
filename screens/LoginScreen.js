@@ -23,7 +23,7 @@ function LoginScreen() {
             console.log('Email is not verified');
           }
       }
-    }, 5000); // Check every 5 seconds
+    }, 1000); // Check every 5 seconds
 
     // Clear the interval when the component unmounts
     return () => clearInterval(intervalId);

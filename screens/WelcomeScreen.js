@@ -15,18 +15,20 @@ import {
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import 'firebase/compat/auth';
-import { firebase, db } from '../config';
-import { collection, addDoc } from 'firebase/firestore';
+import "firebase/compat/auth";
+import { firebase, db } from "../config";
+import { getF, collection, addDoc } from "firebase/firestore";
 import { Firestore, getDocs } from "firebase/firestore";
-import { getAuth} from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from "firebase/auth";
+import { useNavigation } from "@react-navigation/native";
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
+  const navigation = useNavigation();
+
   const token = authCtx.token;
   const userId = getAuth().currentUser ? getAuth().currentUser.uid : null; // Accessing current user's UID// Assuming you have a userId property in your authentication context
-  console.log(userId)
+  console.log(userId);
   const [isModalVisible, setModalVisible] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventName, setEventName] = useState("");
@@ -37,30 +39,22 @@ function WelcomeScreen() {
 
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+
+  const [eventNameError, setEventNameError] = useState(false);
+  const [eventNameErrorMessage, setEventNameErrorMessage] = useState("");
+
   const handleImagePicker = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-  
-      if (result && !result.cancelled && result.uri) {
-        // Update selected photos first
-        setSelectedPhotos((prevPhotos) => [...prevPhotos, { uri: result.uri }]);
-        setSelectedPhotoIndex((prevIndex) => prevIndex === null ? 0 : prevIndex);
-  
-        console.log("Selected Photos after choosing:", selectedPhotos);
-        console.log("Selected Photo Index after choosing:", selectedPhotoIndex);
-  
-        // Update event profile photo state
-        setEventProfilePhoto(result.uri);
-      }
-    } catch (error) {
-      console.error("ImagePicker Error:", error);
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setEventProfilePhoto(result.assets[0].uri);
     }
   };
+
   const addEventDataToFirestore = async (eventName, eventPhotoURI, userId) => {
     try {
       const docRef = await addDoc(collection(db, `users/${userId}/events`), {
@@ -72,10 +66,17 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
-  
-  
 
   const createEvent = () => {
+    if (!eventName.trim()) {
+      setEventNameError(true);
+      setEventNameErrorMessage("Event title cannot be empty");
+      return;
+    } else {
+      setEventNameError(false);
+      setEventNameErrorMessage("");
+    }
+
     const newEvent = {
       id: events.length + 1,
       name: eventName,
@@ -87,18 +88,18 @@ function WelcomeScreen() {
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setEventName("");
     setEventDescription("");
-  
+
     // Reset selected photos and selected index after the state is updated
     setSelectedPhotos([]);
     setSelectedPhotoIndex(null);
-  
+
     // Reset event profile photo state
     setEventProfilePhoto(null);
-  
+
     // Log the updated state
-    console.log("Creating Event with Photos:", selectedPhotos);
-    console.log("Selected Photo Index:", selectedPhotoIndex);
-  
+
+    console.log("Selected Photo Index:", eventProfilePhoto);
+
     toggleModal();
   };
   useEffect(() => {
@@ -107,7 +108,7 @@ function WelcomeScreen() {
         const eventsQuery = collection(db, `users/${userId}/events`); // Adjust the collection path as per your database structure
         const snapshot = await getDocs(eventsQuery);
         const loadedEvents = [];
-  
+
         snapshot.forEach((doc) => {
           const eventData = doc.data();
           const eventName = eventData.name; // Accessing the eventName from the event document
@@ -117,47 +118,52 @@ function WelcomeScreen() {
             ...eventData, // Include other event data if needed
           });
         });
-  
+
         setEvents(loadedEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
       }
     };
-  
+
     fetchEvents();
   }, []);
 
-
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+    setEventProfilePhoto("");
   };
 
   return (
     <View style={styles.rootContainer}>
       <FlatList
-       data={events}
+        data={events}
         keyExtractor={(item) => item.id.toString()}
-       numColumns={2}
-      renderItem={({ item }) => (
-        item ? (
-      <View style={styles.eventItem}>
-        <Text>{item.name}</Text>
-        {item.profilePhoto ? (
-          <Image
-            source={{ uri: item.profilePhoto }}
-            style={{ width: 50, height: 50, borderRadius: 25 }}
-          />
-        ) : (
-          <Text>No Photo</Text>
-        )}
-      </View>
-    ) : (
-      <View />
-    )
-  )}
-/>
-
-
+        numColumns={3}
+        renderItem={({ item }) =>
+          item ? (
+            <TouchableOpacity
+              style={styles.eventItem}
+              onPress={() =>
+                navigation.navigate("EventDetail", {
+                  eventName: item.name,
+                  eventPhoto: item.profilePhoto,
+                })
+              }
+            >
+              <Text>{item.name}</Text>
+              <Text>{item.description}</Text>
+            
+                <Image
+                  source={{ uri: item.profilePhoto }}
+                  style={{ width: 98, height: 50, marginLeft: -12 }}
+                />
+           
+            </TouchableOpacity>
+          ) : (
+            <View />
+          )
+        }
+      />
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
@@ -165,8 +171,11 @@ function WelcomeScreen() {
           <Icon name="home" size={30} color="blue" />
           <Text>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.navButton, styles.circleButton] } onPress={toggleModal}>
-          <Icon name="add" size={40} color="white" />
+        <TouchableOpacity
+          style={[styles.navButton, styles.circleButton]}
+          onPress={toggleModal}
+        >
+          <Icon name="add" size={30} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
           <Icon name="person" size={30} color="blue" />
@@ -174,6 +183,7 @@ function WelcomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Event Creation Modal ----------------------------------------------------------------------------*/}
       <Modal
         animationType="slide"
         transparent={true}
@@ -182,13 +192,21 @@ function WelcomeScreen() {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.createEvent}>Create Event</Text>
-          <Text  style={styles.inputText}>Event Title</Text>
+          <Text style={styles.inputText}>Event Title</Text>
+          {eventNameError && (
+            <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
+          )}
           <TextInput
-            style={styles.input}
+            style={[styles.input, eventNameError && styles.inputError]}
             placeholder="GetTogether, wedding, meeting"
-            onChangeText={(text) => setEventName(text)}
+            onChangeText={(text) => {
+              setEventName(text);
+              setEventNameError(false); // Reset error state when user starts typing
+              setEventNameErrorMessage(""); // Reset error message when user starts typing
+            }}
           />
-          <Text  style={styles.inputText}>Event Description</Text>
+
+          <Text style={styles.inputText}>Event Description</Text>
           <TextInput
             style={styles.input}
             placeholder="Share your moments!"
@@ -208,19 +226,15 @@ function WelcomeScreen() {
           </View>
 
           <View>
-            <Text  style={styles.inputText}>Add Event Profile Photo</Text>
+            <Text style={styles.inputText}>Add Event Profile Photo</Text>
             <TouchableOpacity
-            
-              style={styles.eventPhoto}
-              onPress={() => {
-                console.log("TouchableOpacity Pressed");
-                handleImagePicker();
-              }}
+              style={styles.eventPhotoButton}
+              onPress={handleImagePicker}
             >
-              {selectedPhotos.length > 0 ? (
+              {eventProfilePhoto && eventProfilePhoto.length  > 0 ? (
                 <Image
-                  source={{ uri: selectedPhotos[selectedPhotoIndex].uri }}
-                  style={{ width: 50, height: 50, borderRadius: 25 }}
+                  source={{ uri: eventProfilePhoto }}
+                  style={{ width: 70, height: 70, borderRadius: 50 }}
                 />
               ) : (
                 <Icon name="add" size={30} color="blue" />
@@ -228,11 +242,18 @@ function WelcomeScreen() {
             </TouchableOpacity>
           </View>
 
-              <View style={styles.modalButtonsContainer}>
-                <Button  style={styles.button} title="Cancel" onPress={toggleModal} />
-                <Button  style={styles.button} title="Create" onPress={createEvent} />
-                
-              </View>
+          <View style={styles.modalButtonsContainer}>
+            <Button
+              style={styles.button}
+              title="Cancel"
+              onPress={toggleModal}
+            />
+            <Button
+              style={styles.button}
+              title="Create"
+              onPress={createEvent}
+            />
+          </View>
         </View>
       </Modal>
     </View>
@@ -258,15 +279,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     width: "100%",
     marginTop: 16,
-    
   },
-  
+
   createEvent: {
     fontSize: 30,
     textAlign: "center",
     margin: 30,
-  }
-  ,
+  },
   input: {
     height: 40,
     borderColor: "gray",
@@ -277,23 +296,29 @@ const styles = StyleSheet.create({
     minWidth: 150,
     maxWidth: 150,
   },
-  inputText:{
+  inputError: {
+    borderColor: "red", // Change border color to red when there's an error
+  },
+  errorMessage: {
+    color: "red",
+    fontSize: 12,
+    marginLeft: 10, // Adjust spacing as needed
+  },
+  inputText: {
     fontSize: 14,
     margin: 15,
   },
-  onoffInput:{
+  onoffInput: {
     marginLeft: 15,
-
   },
-  eventPhoto:{
+  eventPhotoButton: {
     width: 90,
     borderWidth: 1,
     borderColor: "rgba(0,0,0,.1)",
-    borderRadius: 45,
-    padding: 30,
+    padding: 10,
     margin: 15,
-  }
-  ,
+  },
+  eventPhoto: {},
   bottomNavBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -307,7 +332,6 @@ const styles = StyleSheet.create({
   },
   navButton: {
     alignItems: "center",
-   
   },
   circleButton: {
     margin: 0,
@@ -315,9 +339,9 @@ const styles = StyleSheet.create({
     width: 65, // Example width
     height: 65, // Example height
     backgroundColor: "rgba(36, 96, 253, 1)",
-    borderRadius: 40, // Half of width and height to create a circle
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 30, // Half of width and height to create a circle
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 90,
   },
   eventItem: {
@@ -331,7 +355,6 @@ const styles = StyleSheet.create({
     margin: 10,
     backgroundColor: "rgba(36, 96, 253, 0.10)",
   },
-  
 });
 
 export default WelcomeScreen;

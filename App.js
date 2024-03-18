@@ -9,6 +9,11 @@ import AppLoading from 'expo-app-loading';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
+import EventDetailScreen from './screens/EventDetailScreen'; 
+
+
+
+
 import { Colors } from './constants/styles';
 import AuthContextProvider, { AuthContext } from './store/auth-context';
 import IconButton from './components/ui/IconButton';
@@ -56,6 +61,8 @@ function AuthenticatedStack() {
           ),
         }}
       />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} /> 
+
     </Stack.Navigator>
   );
 }
