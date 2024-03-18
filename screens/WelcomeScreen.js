@@ -55,17 +55,19 @@ function WelcomeScreen() {
     }
   };
 
-  const addEventDataToFirestore = async (eventName, eventPhotoURI, userId) => {
+  const addEventDataToFirestore = async (eventDescription,eventName, eventPhotoURI, userId) => {
     try {
       const docRef = await addDoc(collection(db, `users/${userId}/events`), {
         name: eventName,
+        description: eventDescription,
         profilePhoto: eventPhotoURI,
       });
       console.log("Event added with ID: ", docRef.id);
     } catch (error) {
       console.error("Error adding event: ", error);
     }
-  };
+};
+
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -83,8 +85,7 @@ function WelcomeScreen() {
       description: eventDescription,
       profilePhoto: eventProfilePhoto,
     };
-    addEventDataToFirestore(eventName, eventProfilePhoto, userId); // Pass userId here
-    // Use setState callback to ensure the correct order of state updates
+    addEventDataToFirestore(eventDescription, eventName, eventProfilePhoto, userId);    // Use setState callback to ensure the correct order of state updates
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setEventName("");
     setEventDescription("");
@@ -146,12 +147,13 @@ function WelcomeScreen() {
               onPress={() =>
                 navigation.navigate("EventDetail", {
                   eventName: item.name,
+                  eventDescription: item.description,
                   eventPhoto: item.profilePhoto,
                 })
               }
             >
               <Text>{item.name}</Text>
-              <Text>{item.description}</Text>
+
             
                 <Image
                   source={{ uri: item.profilePhoto }}

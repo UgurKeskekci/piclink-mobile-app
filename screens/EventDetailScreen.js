@@ -2,14 +2,14 @@ import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 
 const EventDetailScreen = ({ route }) => {
-  const { eventName, eventPhoto } = route.params;
+  const { eventDescription, eventName, eventPhoto } = route.params;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Image source={{ uri: eventPhoto }} style={styles.image} />
         <Text style={styles.title}>{eventName}</Text>
-        <Text style={styles.description}>Event Description Place</Text>
+        <Text style={styles.description}>{eventDescription}</Text>
       </View>
      
       <View style={styles.separator} />
