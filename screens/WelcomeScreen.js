@@ -138,7 +138,7 @@ function WelcomeScreen() {
       <FlatList
         data={events}
         keyExtractor={(item) => item.id.toString()}
-        numColumns={3}
+        numColumns={2}
         renderItem={({ item }) =>
           item ? (
             <TouchableOpacity
@@ -150,13 +150,16 @@ function WelcomeScreen() {
                 })
               }
             >
+              
               <Text>{item.name}</Text>
               <Text>{item.description}</Text>
+              <View style={styles.subheading}></View> 
             
                 <Image
                   source={{ uri: item.profilePhoto }}
                   style={{ width: 98, height: 50, marginLeft: -12 }}
                 />
+           
            
             </TouchableOpacity>
           ) : (
@@ -283,6 +286,25 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 
+  eventItem: {
+    width: 165,
+    height: 150,
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 20,
+    borderColor: "#cbd7f3",
+    marginBottom: 8,
+    margin: 5,
+    backgroundColor: "#cbd7f3",
+  },
+  subheading: {
+    width: 166,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    position: 'absolute',
+    left: -2,
+    bottom: -2, // Align the subheading box at the bottom of the parent box
+  },
   createEvent: {
     fontSize: 30,
     textAlign: "center",
@@ -311,6 +333,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     margin: 15,
   },
+  
   onoffInput: {
     marginLeft: 15,
   },
@@ -350,17 +373,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 90,
-  },
-  eventItem: {
-    width: 100,
-    height: 120,
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 20,
-    borderColor: "rgba(36, 96, 253, 0.10)",
-    marginBottom: 8,
-    margin: 10,
-    backgroundColor: "rgba(36, 96, 253, 0.10)",
   },
 });
 
