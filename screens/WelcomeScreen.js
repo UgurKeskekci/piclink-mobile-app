@@ -137,7 +137,7 @@ function WelcomeScreen() {
       <FlatList
        data={events}
         keyExtractor={(item) => item.id.toString()}
-       numColumns={3}
+       numColumns={2}
       renderItem={({ item }) => (
         item ? (
       <View style={styles.eventItem}>
