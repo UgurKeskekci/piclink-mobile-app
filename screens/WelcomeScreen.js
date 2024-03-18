@@ -1,5 +1,4 @@
-import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -13,35 +12,68 @@ import {
   Image,
 } from "react-native";
 import { AuthContext } from "../store/auth-context";
+import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import "firebase/compat/auth";
-import { firebase, db } from "../config";
-import { getF, collection, addDoc } from "firebase/firestore";
-import { Firestore, getDocs } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { db } from "../config";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
   const navigation = useNavigation();
-
-  const token = authCtx.token;
-  const userId = getAuth().currentUser ? getAuth().currentUser.uid : null; // Accessing current user's UID// Assuming you have a userId property in your authentication context
-  console.log(userId);
+  const [userId, setUserId] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventName, setEventName] = useState("");
   const [eventDescription, setEventDescription] = useState("");
-  const [eventProfilePhoto, setEventProfilePhoto] = useState(null); // New state for event profile photo
+  const [eventProfilePhoto, setEventProfilePhoto] = useState(null);
   const [isEnabled, setIsEnabled] = useState(false);
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
-
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
-
   const [eventNameError, setEventNameError] = useState(false);
   const [eventNameErrorMessage, setEventNameErrorMessage] = useState("");
+
+  useEffect(() => {
+    const fetchAndLogUid = async () => {
+      try {
+        const uid = await AsyncStorage.getItem('uid');
+        console.log('UID retrieved from AsyncStorage:', uid);
+        if (!userId && uid) {
+          setUserId(uid);
+        }
+      } catch (error) {
+        console.error('Error retrieving UID from AsyncStorage:', error);
+      }
+    };
+    fetchAndLogUid();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      const fetchEvents = async () => {
+        try {
+          const eventsQuery = collection(db, `users/${userId}/events`);
+          const snapshot = await getDocs(eventsQuery);
+          const loadedEvents = snapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            ...doc.data(),
+          }));
+          setEvents(loadedEvents);
+        } catch (error) {
+          console.error("Error fetching events:", error);
+        }
+      };
+      fetchEvents();
+    }
+  }, [userId]);
+
+  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+    setEventProfilePhoto("");
+  };
 
   const handleImagePicker = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -55,19 +87,18 @@ function WelcomeScreen() {
     }
   };
 
-  const addEventDataToFirestore = async (eventDescription,eventName, eventPhotoURI, userId) => {
+  const addEventDataToFirestore = async () => {
     try {
       const docRef = await addDoc(collection(db, `users/${userId}/events`), {
         name: eventName,
         description: eventDescription,
-        profilePhoto: eventPhotoURI,
+        profilePhoto: eventProfilePhoto,
       });
       console.log("Event added with ID: ", docRef.id);
     } catch (error) {
       console.error("Error adding event: ", error);
     }
-};
-
+  };
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -79,61 +110,21 @@ function WelcomeScreen() {
       setEventNameErrorMessage("");
     }
 
+    addEventDataToFirestore();
     const newEvent = {
       id: events.length + 1,
       name: eventName,
       description: eventDescription,
       profilePhoto: eventProfilePhoto,
     };
-    addEventDataToFirestore(eventDescription, eventName, eventProfilePhoto, userId);    // Use setState callback to ensure the correct order of state updates
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setEventName("");
     setEventDescription("");
-
-    // Reset selected photos and selected index after the state is updated
     setSelectedPhotos([]);
     setSelectedPhotoIndex(null);
-
-    // Reset event profile photo state
     setEventProfilePhoto(null);
-
-    // Log the updated state
-
-    console.log("Selected Photo Index:", eventProfilePhoto);
-
     toggleModal();
   };
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const eventsQuery = collection(db, `users/${userId}/events`); // Adjust the collection path as per your database structure
-        const snapshot = await getDocs(eventsQuery);
-        const loadedEvents = [];
-
-        snapshot.forEach((doc) => {
-          const eventData = doc.data();
-          const eventName = eventData.name; // Accessing the eventName from the event document
-          loadedEvents.push({
-            id: doc.id,
-            name: eventName,
-            ...eventData, // Include other event data if needed
-          });
-        });
-
-        setEvents(loadedEvents);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-      }
-    };
-
-    fetchEvents();
-  }, []);
-
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-    setEventProfilePhoto("");
-  };
-
   return (
     <View style={styles.rootContainer}>
       <FlatList
