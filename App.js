@@ -84,18 +84,20 @@ function Root() {
   const authCtx = useContext(AuthContext);
 
   useEffect(() => {
-    async function fetchToken() {
+    async function fetchTokenAndUid() {
       const storedToken = await AsyncStorage.getItem('token');
-
+      const storedUid = await AsyncStorage.getItem('uid'); // Fetch UID
+  
       if (storedToken) {
-        authCtx.authenticate(storedToken);
+        authCtx.authenticate(storedToken, storedUid); // Pass both token and UID
       }
-
+  
       setIsTryingLogin(false);
     }
-
-    fetchToken();
+  
+    fetchTokenAndUid();
   }, []);
+  
 
   if (isTryingLogin) {
     return <AppLoading />;

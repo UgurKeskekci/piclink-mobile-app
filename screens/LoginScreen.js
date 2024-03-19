@@ -6,6 +6,7 @@ import LoadingOverlay from '../components/ui/LoadingOverlay';
 import { AuthContext } from '../store/auth-context';
 import { login } from '../util/auth';
 import { getAuth,createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function LoginScreen() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -35,7 +36,8 @@ function LoginScreen() {
       console.log('Logging in with email:', email); // Log email for debugging
       const userCredential = await signInWithEmailAndPassword(getAuth(), email, password);
       const user = userCredential.user;
-      console.log(user)
+      console.log(user.uid)
+      AsyncStorage.setItem('uid', user.uid);
       if (!user) {
         throw new Error('User not found');
       }
