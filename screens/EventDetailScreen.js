@@ -7,66 +7,22 @@ const EventDetailScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: eventPhoto }} style={styles.image} />
-      </View>
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: eventPhoto }} style={styles.image} />
+        </View>
         <View style={styles.eventDesc}>
-        <Text style={styles.title}>{eventName}</Text>
-        <Text style={styles.description}>{eventDescription}</Text>
+          <Text style={styles.title}>{eventName}</Text>
+          <Text style={styles.description}>{eventDescription}</Text>
+        </View>
       </View>
-     
-      <View style={styles.separator} />
+
       <View style={styles.separator} />
       <View style={styles.gridContainer}>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-        <View style={styles.item}>
-        <Text>Aloo</Text> 
-        </View>
-     
+        {[...Array(16)].map((_, index) => (
+          <View key={index} style={styles.item}>
+            <Text>Aloo</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -74,16 +30,16 @@ const EventDetailScreen = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 4,
+    flex: 1,
     flexDirection: "column",
   },
   header: {
     flexDirection: 'row',
-    margin: 10,    
+    margin: 10,
     height: 150,
   },
   imageContainer: {
-    justifyContent: 'center', 
+    justifyContent: 'center',
   },
   image: {
     width: 90,
@@ -91,12 +47,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     borderRadius: 100,
     marginLeft: 10,
-    marginTop:10,
+    marginTop: 10,
     backgroundColor: 'gray',
   },
   eventDesc: {
     flexDirection: 'column',
-    justifyContent: 'center', 
+    justifyContent: 'center',
     paddingLeft: 30,
   },
   title: {
