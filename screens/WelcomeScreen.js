@@ -130,7 +130,7 @@ function WelcomeScreen() {
       <FlatList
         data={events}
         keyExtractor={(item) => item.id.toString()}
-        numColumns={3}
+        numColumns={2}
         renderItem={({ item }) =>
           item ? (
             <TouchableOpacity
@@ -143,13 +143,16 @@ function WelcomeScreen() {
                 })
               }
             >
+              
               <Text>{item.name}</Text>
-
+              <Text>{item.description}</Text>
+              <View style={styles.subheading}></View> 
             
                 <Image
                   source={{ uri: item.profilePhoto }}
                   style={{ width: 98, height: 50, marginLeft: -12 }}
                 />
+           
            
             </TouchableOpacity>
           ) : (
@@ -192,6 +195,7 @@ function WelcomeScreen() {
           <TextInput
             style={[styles.input, eventNameError && styles.inputError]}
             placeholder="GetTogether, wedding, meeting"
+            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
             onChangeText={(text) => {
               setEventName(text);
               setEventNameError(false); // Reset error state when user starts typing
@@ -203,6 +207,7 @@ function WelcomeScreen() {
           <TextInput
             style={styles.input}
             placeholder="Share your moments!"
+            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
             onChangeText={(text) => setEventDescription(text)}
           />
 
@@ -263,7 +268,7 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     backgroundColor: "white",
     padding: 16,
   },
@@ -274,20 +279,40 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 
+  eventItem: {
+    width: 165,
+    height: 150,
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 20,
+    borderColor: "#cbd7f3",
+    marginBottom: 8,
+    margin: 5,
+    backgroundColor: "#cbd7f3",
+  },
+  subheading: {
+    width: 166,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    position: 'absolute',
+    left: -2,
+    bottom: -2, // Align the subheading box at the bottom of the parent box
+  },
   createEvent: {
     fontSize: 30,
     textAlign: "center",
-    margin: 30,
+    margin: 50,
   },
   input: {
-    height: 40,
-    borderColor: "gray",
+    width: 330, // Width without units in React Native
+    height: 45, // Height without units in React Native
+    flexGrow: 0, // Use flexGrow property directly
+    marginVertical: 9, // Margin for vertical spacing
+    borderRadius: 10,
     borderWidth: 1,
-    borderRadius: 30,
-    margin: 9,
-    padding: 8,
-    minWidth: 150,
-    maxWidth: 150,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    margin: 15,
+    padding: 15,
   },
   inputError: {
     borderColor: "red", // Change border color to red when there's an error
@@ -298,17 +323,22 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Adjust spacing as needed
   },
   inputText: {
-    fontSize: 14,
+    fontSize: 16,
     margin: 15,
   },
+  
   onoffInput: {
     marginLeft: 15,
   },
   eventPhotoButton: {
     width: 90,
+    height: 90,
+    flexGrow: 0,
+    margin: '8.8px 167px 0 0', // Margin top, right, bottom, left
+    padding: '30px 7px 18px', // Padding top, right, bottom
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,.1)",
-    padding: 10,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     margin: 15,
   },
   eventPhoto: {},
@@ -336,17 +366,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 90,
-  },
-  eventItem: {
-    width: 100,
-    height: 120,
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 20,
-    borderColor: "rgba(36, 96, 253, 0.10)",
-    marginBottom: 8,
-    margin: 10,
-    backgroundColor: "rgba(36, 96, 253, 0.10)",
   },
 });
 

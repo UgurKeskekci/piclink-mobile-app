@@ -7,7 +7,10 @@ const EventDetailScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+      <View style={styles.imageContainer}>
         <Image source={{ uri: eventPhoto }} style={styles.image} />
+      </View>
+        <View style={styles.eventDesc}>
         <Text style={styles.title}>{eventName}</Text>
         <Text style={styles.description}>{eventDescription}</Text>
       </View>
@@ -15,6 +18,39 @@ const EventDetailScreen = ({ route }) => {
       <View style={styles.separator} />
       <View style={styles.separator} />
       <View style={styles.gridContainer}>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
+        <View style={styles.item}>
+        <Text>Aloo</Text> 
+        </View>
         <View style={styles.item}>
         <Text>Aloo</Text> 
         </View>
@@ -42,27 +78,34 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   header: {
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-   
+    flexDirection: 'row',
+    margin: 10,    
+    height: 150,
+  },
+  imageContainer: {
+    justifyContent: 'center', 
   },
   image: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     resizeMode: "cover",
     borderRadius: 100,
     marginLeft: 10,
     marginTop:10,
+    backgroundColor: 'gray',
+  },
+  eventDesc: {
+    flexDirection: 'column',
+    justifyContent: 'center', 
+    paddingLeft: 30,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 10,
+    fontSize: 32,
+    fontWeight: '600',
   },
   description: {
-    fontSize: 12,
-    marginLeft: 10,
-    marginBottom: 10,
+    width: 150,
+    fontSize: 14,
   },
   separator: {
     borderBottomWidth: 1,
@@ -70,23 +113,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   gridContainer: {
+    width: '100%',
     marginHorizontal: "auto",
-    width: 400,
     flexDirection: "row",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
   },
   item: {
-    flex: 1,
-    minWidth: 100,
-    maxWidth: 100,
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
-
-    padding: 10,
-    backgroundColor: "rgba(249, 180, 45, 0.25)",
-    borderWidth: 1.5,
-    borderColor: "#fff"
+    width: '32%',
+    height: 130,
+    backgroundColor: '#d9d9d9',
+    margin: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
