@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from "../config";
+import { db, storage } from "../config";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 
 function WelcomeScreen() {
@@ -82,10 +82,22 @@ function WelcomeScreen() {
       aspect: [1, 1],
       quality: 1,
     });
-    if (!result.canceled) {
-      setEventProfilePhoto(result.assets[0].uri);
+    if (!result.cancelled) {
+      const uri = result.assets[0].uri;
+      const imageName = uri.substring(uri.lastIndexOf('/') + 1);
+      try {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const storageRef = storage.ref().child(`eventProfilePhotos/${imageName}`);
+        await storageRef.put(blob);
+        const downloadURL = await storageRef.getDownloadURL();
+        setEventProfilePhoto(downloadURL);
+      } catch (error) {
+        console.error('Error uploading image to Firebase Storage:', error);
+      }
     }
   };
+  
 
   const addEventDataToFirestore = async () => {
     try {
@@ -99,6 +111,7 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
+  
 
   const createEvent = () => {
     if (!eventName.trim()) {

@@ -12,6 +12,7 @@
     "@react-native-async-storage/async-storage": "^1.22.3",
     "@react-native-firebase/app": "^19.0.0",
     "@react-native-firebase/firestore": "^19.0.0",
+    "@react-native-firebase/storage": "^19.0.1",
     "@react-navigation/bottom-tabs": "^6.5.16",
     "@react-navigation/native": "^6.1.14",
     "@react-navigation/native-stack": "^6.5.0",
