@@ -17,6 +17,7 @@ const EventDetailScreen = ({ route }) => {
       </View>
 
       <View style={styles.separator} />
+      
       <View style={styles.gridContainer}>
         {[...Array(16)].map((_, index) => (
           <View key={index} style={styles.item}>

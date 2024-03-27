@@ -134,7 +134,11 @@ function WelcomeScreen() {
         renderItem={({ item }) =>
           item ? (
             <TouchableOpacity
-              style={styles.eventItem}
+            
+            style={[
+              styles.eventItem,
+              { width: events.length > 1 ? "47%" : "70%" }
+            ]}
               onPress={() =>
                 navigation.navigate("EventDetail", {
                   eventName: item.name,
@@ -143,15 +147,20 @@ function WelcomeScreen() {
                 })
               }
             >
-              
-              <Text>{item.name}</Text>
-              <Text>{item.description}</Text>
-              <View style={styles.subheading}></View> 
+             
+              <View style={styles.subheading}>
+                  <View style={styles.eventBoxTitle}>
+                    <Text>{item.name}</Text>
+                  </View>
+              </View> 
             
-                <Image
+              <View style={styles.eventBoxImage}>
+              <Image
                   source={{ uri: item.profilePhoto }}
-                  style={{ width: 98, height: 50, marginLeft: -12 }}
+                  style={{ width: 120, height: 90, borderRadius: 10}}
                 />
+              </View>
+              
            
            
             </TouchableOpacity>
@@ -283,7 +292,7 @@ const styles = StyleSheet.create({
   },
 
   eventItem: {
-    width: "47%",
+    width: "100%", 
     height: 150,
     padding: 12,
     borderWidth: 1,
@@ -293,14 +302,27 @@ const styles = StyleSheet.create({
     margin: 5,
     backgroundColor: "#cbd7f3",
     position: "relative",
+    justifyContent: 'center', 
+    alignItems: 'center', 
   },
   subheading: {
-    width: "150%",
+    width: "120%",
     height: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     position: 'absolute',
     left: -2,
     bottom: -2, // Align the subheading box at the bottom of the parent box
+  },
+  eventBoxTitle:{
+    justifyContent: 'center', 
+    alignItems: 'center',
+    top: 10,
+  },
+  eventBoxImage:{
+    justifyContent: 'center', 
+    alignItems: 'center',
+    top: -15,
+
   },
   createEvent: {
     fontSize: 30,
@@ -403,6 +425,7 @@ const styles = StyleSheet.create({
   buttonTextCreateEvent:{
     color: "white",
   },
+ 
 });
 
 export default WelcomeScreen;
