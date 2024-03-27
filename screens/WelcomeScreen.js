@@ -138,6 +138,12 @@ function WelcomeScreen() {
     setEventProfilePhoto(null);
     toggleModal();
   };
+
+  const goToProfile = () => {
+    navigation.navigate('Profile'); 
+  };
+
+
   return (
     <View style={styles.rootContainer}>
       <FlatList
@@ -186,7 +192,7 @@ function WelcomeScreen() {
         >
           <Icon name="add" size={30} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
           <Icon name="person" size={30} color="blue" />
           <Text>Profile</Text>
         </TouchableOpacity>
@@ -254,17 +260,20 @@ function WelcomeScreen() {
           </View>
 
           <View style={styles.modalButtonsContainer}>
-            <Button
-              style={styles.button}
-              title="Cancel"
-              onPress={toggleModal}
-            />
-            <Button
-              style={styles.button}
-              title="Create"
-              onPress={createEvent}
-            />
+              <TouchableOpacity
+                onPress={toggleModal}
+                style={[styles.button, styles.cancelButton]}
+              >
+                <Text style={styles.buttonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={createEvent}
+                style={[styles.button, styles.createButton]}
+              >
+                <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
+              </TouchableOpacity>
           </View>
+
         </View>
       </Modal>
     </View>
@@ -293,7 +302,7 @@ const styles = StyleSheet.create({
   },
 
   eventItem: {
-    width: 165,
+    width: "47%",
     height: 150,
     padding: 12,
     borderWidth: 1,
@@ -302,9 +311,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     margin: 5,
     backgroundColor: "#cbd7f3",
+    position: "relative",
   },
   subheading: {
-    width: 166,
+    width: "150%",
     height: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     position: 'absolute',
@@ -347,13 +357,17 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     flexGrow: 0,
-    margin: '8.8px 167px 0 0', // Margin top, right, bottom, left
-    padding: '30px 7px 18px', // Padding top, right, bottom
+    margin: '8.8px 167px 0 0', 
+    padding: '30px 7px 18px', 
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
     margin: 15,
+    justifyContent: 'center', 
+    alignItems: 'center', 
+
   },
+  
   eventPhoto: {},
   bottomNavBar: {
     flexDirection: "row",
@@ -372,13 +386,41 @@ const styles = StyleSheet.create({
   circleButton: {
     margin: 0,
     padding: 0,
-    width: 65, // Example width
-    height: 65, // Example height
+    width: 65, 
+    height: 65,
     backgroundColor: "rgba(36, 96, 253, 1)",
-    borderRadius: 30, // Half of width and height to create a circle
+    borderRadius: 30, 
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 90,
+  },
+  cancelButton: {
+    width: "45%",
+    height: 40,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: '#2460fd',
+    marginTop: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  createButton: {
+    width: "45%",
+    height: 40,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#2460fd',
+    marginTop: 60,
+    justifyContent: "center",
+    alignItems: "center",
+
+  },
+  buttonTextCancel:{
+    color: "black",
+  },
+  buttonTextCreateEvent:{
+    color: "white",
   },
 });
 
