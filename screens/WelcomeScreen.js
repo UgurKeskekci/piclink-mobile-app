@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from "../config";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 
+
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
   const navigation = useNavigation();
@@ -143,7 +144,6 @@ function WelcomeScreen() {
     navigation.navigate('Profile'); 
   };
 
-
   return (
     <View style={styles.rootContainer}>
       <FlatList
@@ -156,13 +156,13 @@ function WelcomeScreen() {
               style={styles.eventItem}
               onPress={() =>
                 navigation.navigate("EventDetail", {
+                  eventId: item.id, 
                   eventName: item.name,
                   eventDescription: item.description,
                   eventPhoto: item.profilePhoto,
                 })
               }
             >
-              
               <Text>{item.name}</Text>
               <Text>{item.description}</Text>
               <View style={styles.subheading}></View> 

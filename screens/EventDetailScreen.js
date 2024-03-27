@@ -1,56 +1,245 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Modal,
-  TextInput,
-  FlatList,
-  Button,
-  Switch,
   Image,
-  Platform,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
+import { db, storage } from "../config";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 
 const EventDetailScreen = ({ route }) => {
-  const { eventDescription, eventName, eventPhoto } = route.params;
+  // Destructure route parameters
+  const { eventId, eventDescription, eventName, eventPhoto } = route.params;
+  
+  // Initialize navigation
   const navigation = useNavigation();
-
+  
+  // State variables
+  const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
   const [selectedImages, setSelectedImages] = useState([]);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [photoDescription, setPhotoDescription] = useState("");
-  const [gridImages, setGridImages] = useState([]); 
 
-  const goToProfile = () => {
-    navigation.navigate("Profile");
+  // Fetch and log user ID from AsyncStorage
+  useEffect(() => {
+    const fetchAndLogUid = async () => {
+      try {
+        const uid = await AsyncStorage.getItem("uid");
+        if (uid) {
+          setUserId(uid);
+        }
+      } catch (error) {
+        console.error("Error retrieving UID from AsyncStorage:", error);
+      }
+    };
+
+    fetchAndLogUid();
+  }, []);
+
+  // Fetch selected images from AsyncStorage
+  const fetchSelectedImages = async () => {
+    try {
+      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
+      if (storedImages) {
+        setSelectedImages(JSON.parse(storedImages));
+      }
+    } catch (error) {
+      console.error("Error retrieving selected images from AsyncStorage:", error);
+    }
   };
 
+  useEffect(() => {
+    fetchSelectedImages();
+  }, [eventId]);
+
+  // Navigate to profile screen
+  const goToProfile = () => {
+    navigation.navigate("Profile", {
+      screen: "EventDetail",
+      params: {
+        eventId,
+        eventDescription,
+        eventName,
+        eventPhoto,
+      },
+    });
+  };
+
+  // Store selected images in AsyncStorage
+  const storeSelectedImages = async (images) => {
+    try {
+      await AsyncStorage.setItem(
+        `selectedImages_${eventId}`,
+        JSON.stringify(images)
+      );
+    } catch (error) {
+      console.error("Error storing selected images in AsyncStorage:", error);
+    }
+  };
+
+  // Handle photo selection from image picker
+  const handlePhotoSelection = async (selectedPhotos) => {
+    console.log("Handling photo selection...");
+    try {
+      const photoUrls = await uploadPhotosToStorage(selectedPhotos);
+      await storePhotoUrlsInFirestore(photoUrls);
+      const updatedImages = [...selectedImages, ...photoUrls];
+      setSelectedImages(updatedImages);
+      await storeSelectedImages(updatedImages);
+      
+    } catch (error) {
+      console.error("Error handling photo selection:", error);
+    }
+  };
+
+  // Render selected images
+  const renderSelectedImages = () => {
+    console.log("Rendering selected images...");
+    return selectedImages.map((imageUri, index) => (
+      <Image
+        key={index}
+        source={{ uri: imageUri }}
+        style={styles.selectedImage}
+      />
+    ));
+  };
+
+  // Upload photos to Firebase Storage
+  const uploadPhotosToStorage = async (photos) => {
+    try {
+      const photoUrls = [];
+      for (const photoUri of photos) {
+        const imageName = photoUri.substring(photoUri.lastIndexOf('/') + 1);
+        const response = await fetch(photoUri);
+        const blob = await response.blob();
+        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
+        await storageRef.put(blob);
+        const downloadURL = await storageRef.getDownloadURL();
+        photoUrls.push(downloadURL);
+        console.log("Download URL:", downloadURL);
+      }
+      return photoUrls;
+    } catch (error) {
+      console.error("Error uploading photos to Firebase Storage:", error);
+      throw error;
+    }
+  };
+
+  // Fetch existing photos from Firestore
+  const fetchExistingPhotosFromFirestore = async () => {
+    try {
+      const eventRef = doc(db, `users/${userId}/events/${eventId}`);
+      const eventSnapshot = await getDoc(eventRef);
+      if (eventSnapshot.exists()) {
+        const eventData = eventSnapshot.data();
+        return eventData.photos || [];
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching existing photos from Firestore:", error);
+      return [];
+    }
+  };
+
+  // Fetch existing photo URLs from Firebase Storage
+  const fetchExistingPhotoUrlsFromStorage = async () => {
+    try {
+      const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
+      const listResult = await storageRef.listAll();
+      const photoUrls = listResult.items.map(item => item.getDownloadURL());
+      return Promise.all(photoUrls);
+    } catch (error) {
+      console.error("Error fetching existing photo URLs from Storage:", error);
+      return [];
+    }
+  };
+
+  // Remove deleted photos from AsyncStorage
+  useEffect(() => {
+    removeDeletedPhotosFromAsyncStorage();
+  }, [eventId]);
+
+  const removeDeletedPhotosFromAsyncStorage = async () => {
+    try {
+      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
+      if (storedImages) {
+        const storedImageUris = JSON.parse(storedImages);
+        
+        // Check each stored image URI if it exists in Firestore or Storage
+        const existingPhotos = await fetchExistingPhotosFromFirestore();
+        const existingPhotoUrls = existingPhotos.map(photo => photo.url);
+        const storagePhotoUrls = await fetchExistingPhotoUrlsFromStorage();
+        
+        // Combine existing photo URLs from Firestore and Storage
+        const allExistingPhotoUrls = [...existingPhotoUrls, ...storagePhotoUrls];
+        
+        // Filter out images that exist in either Firestore or Storage
+        const filteredImages = storedImageUris.filter(uri => allExistingPhotoUrls.includes(uri));
+        
+        await AsyncStorage.setItem(
+          `selectedImages_${eventId}`,
+          JSON.stringify(filteredImages)
+        );
+        setSelectedImages(filteredImages);
+      }
+    } catch (error) {
+      console.error("Error removing deleted photos from AsyncStorage:", error);
+    }
+  };
+
+  // Store photo URLs in Firestore
+  const storePhotoUrlsInFirestore = async (urls) => {
+    try {
+      const eventRef = doc(db, `users/${userId}/events/${eventId}`);
+      if (eventRef) {
+        // Get the existing document snapshot
+        const eventSnapshot = await getDoc(eventRef);
+        if (eventSnapshot.exists()) {
+          const eventData = eventSnapshot.data();
+          // Get the existing photos array or initialize as empty array
+          const existingPhotos = eventData.photos || [];
+          // Concatenate existing photos with new URLs
+          const updatedPhotos = existingPhotos.concat(urls);
+          // Update the 'photos' field in Firestore document
+          await updateDoc(eventRef, { photos: updatedPhotos });
+          console.log("Photos uploaded and URLs stored successfully!");
+        } else {
+          console.error("Event document does not exist!");
+        }
+      } else {
+        console.error("Event reference is undefined!");
+      }
+    } catch (error) {
+      console.error("Error storing photo URLs in Firestore:", error);
+    }
+  };
+  // Pick image from device gallery
   const pickImage = async () => {
     let permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      alert("Permission to access camera roll is required!");
-      return;
-    }
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (permissionResult.granted === false) {
+    alert("Permission to access camera roll is required!");
+    return;
+  }
 
-    let pickerResult = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-      multiple: true, 
-    });
+  let pickerResult = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+    multiple: true,
+  });
 
-    if (!pickerResult.cancelled) {
-      const newSelectedImages = pickerResult.assets.map((asset) => asset.uri);
-      setSelectedImages([...selectedImages, ...newSelectedImages]);
-    }
-  };
-
+  if (!pickerResult.cancelled) {
+    const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
+    console.log("Selected Images:", selectedImages);
+    await handlePhotoSelection(selectedPhotos);
+  }
+};
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
@@ -129,13 +318,7 @@ const EventDetailScreen = ({ route }) => {
 
       {/* GRID LAYOUT FOR PHOTOS */}
       <View style={styles.gridContainer}>
-        {selectedImages.map((imageUri, index) => (
-          <Image
-            key={index}
-            source={{ uri: imageUri }}
-            style={styles.selectedImage}
-          />
-        ))}
+        {renderSelectedImages()}
       </View>
 
       {/* Bottom Navigation Bar */}
