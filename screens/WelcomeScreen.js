@@ -125,6 +125,12 @@ function WelcomeScreen() {
     setEventProfilePhoto(null);
     toggleModal();
   };
+
+  const goToProfile = () => {
+    navigation.navigate('Profile'); 
+  };
+
+
   return (
     <View style={styles.rootContainer}>
       <FlatList
@@ -182,7 +188,7 @@ function WelcomeScreen() {
         >
           <Icon name="add" size={30} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
           <Icon name="person" size={30} color="blue" />
           <Text>Profile</Text>
         </TouchableOpacity>
