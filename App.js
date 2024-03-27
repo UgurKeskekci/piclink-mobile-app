@@ -10,6 +10,7 @@ import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import EventDetailScreen from './screens/EventDetailScreen'; 
+import ProfilePage from './screens/ProfilePage'; 
 
 
 
@@ -62,7 +63,7 @@ function AuthenticatedStack() {
         }}
       />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} /> 
-
+      <Stack.Screen name="Profile" component={ProfilePage} />
     </Stack.Navigator>
   );
 }
