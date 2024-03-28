@@ -30,7 +30,9 @@
     "react-native-image-crop-picker": "^0.40.3",
     "react-native-image-picker": "^7.1.0",
     "react-native-qrcode-svg": "^6.3.0",
-    "react-native-web": "~0.19.6"
+    "react-native-web": "~0.19.6",
+    "expo-file-system": "~16.0.8",
+    "expo-media-library": "~15.9.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

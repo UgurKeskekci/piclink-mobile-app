@@ -15,10 +15,9 @@ import { AuthContext } from "../store/auth-context";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, storage } from "../config";
 import { collection, addDoc, getDocs } from "firebase/firestore";
-
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
@@ -34,17 +33,18 @@ function WelcomeScreen() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
   const [eventNameError, setEventNameError] = useState(false);
   const [eventNameErrorMessage, setEventNameErrorMessage] = useState("");
+  const [searchText, setSearchText] = useState(""); // Define setSearchText here
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
       try {
-        const uid = await AsyncStorage.getItem('uid');
-        console.log('UID retrieved from AsyncStorage:', uid);
+        const uid = await AsyncStorage.getItem("uid");
+        console.log("UID retrieved from AsyncStorage:", uid);
         if (!userId && uid) {
           setUserId(uid);
         }
       } catch (error) {
-        console.error('Error retrieving UID from AsyncStorage:', error);
+        console.error("Error retrieving UID from AsyncStorage:", error);
       }
     };
     fetchAndLogUid();
@@ -56,7 +56,7 @@ function WelcomeScreen() {
         try {
           const eventsQuery = collection(db, `users/${userId}/events`);
           const snapshot = await getDocs(eventsQuery);
-          const loadedEvents = snapshot.docs.map(doc => ({
+          const loadedEvents = snapshot.docs.map((doc) => ({
             id: doc.id,
             name: doc.data().name,
             ...doc.data(),
@@ -85,20 +85,21 @@ function WelcomeScreen() {
     });
     if (!result.cancelled) {
       const uri = result.assets[0].uri;
-      const imageName = uri.substring(uri.lastIndexOf('/') + 1);
+      const imageName = uri.substring(uri.lastIndexOf("/") + 1);
       try {
         const response = await fetch(uri);
         const blob = await response.blob();
-        const storageRef = storage.ref().child(`eventProfilePhotos/${imageName}`);
+        const storageRef = storage
+          .ref()
+          .child(`eventProfilePhotos/${imageName}`);
         await storageRef.put(blob);
         const downloadURL = await storageRef.getDownloadURL();
         setEventProfilePhoto(downloadURL);
       } catch (error) {
-        console.error('Error uploading image to Firebase Storage:', error);
+        console.error("Error uploading image to Firebase Storage:", error);
       }
     }
   };
-  
 
   const addEventDataToFirestore = async () => {
     try {
@@ -112,7 +113,6 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
-  
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -141,11 +141,51 @@ function WelcomeScreen() {
   };
 
   const goToProfile = () => {
-    navigation.navigate('Profile'); 
+    navigation.navigate("Profile");
+  };
+
+  // SearchBarRelated
+  const fetchEvents = async () => {
+    try {
+      const eventsQuery = collection(db, `users/${userId}/events`);
+      const snapshot = await getDocs(eventsQuery);
+      const loadedEvents = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+        ...doc.data(),
+      }));
+      setEvents(loadedEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
+  const handleSearch = (text) => {
+    setSearchText(text); // Update the local state with the current search text
+  
+    if (text.trim() === "") {
+      // If the search text is empty, fetch all events
+      fetchEvents();
+    } else {
+      const formattedSearchText = text.toLowerCase();
+  
+      const filteredEvents = events.filter((event) => {
+        const eventName = event.name.toLowerCase();
+        return eventName.includes(formattedSearchText);
+      });
+      setEvents(filteredEvents); // Update the events state with filtered events
+    }
   };
 
   return (
     <View style={styles.rootContainer}>
+      <TextInput
+  style={styles.input}
+  placeholder="Search events..."
+  placeholderTextColor="rgba(0, 0, 0, 0.5)"
+  onChangeText={handleSearch}
+  value={searchText} // Bind the value to searchText state
+/>
       <FlatList
         data={events}
         keyExtractor={(item) => item.id.toString()}
@@ -153,36 +193,31 @@ function WelcomeScreen() {
         renderItem={({ item }) =>
           item ? (
             <TouchableOpacity
-            
-            style={[
-              styles.eventItem,
-              { width: events.length > 1 ? "47%" : "70%" }
-            ]}
+              style={[
+                styles.eventItem,
+                { width: events.length > 1 ? "47%" : "70%" },
+              ]}
               onPress={() =>
                 navigation.navigate("EventDetail", {
-                  eventId: item.id, 
+                  eventId: item.id,
                   eventName: item.name,
                   eventDescription: item.description,
                   eventPhoto: item.profilePhoto,
                 })
               }
             >
-             
               <View style={styles.subheading}>
-                  <View style={styles.eventBoxTitle}>
-                    <Text>{item.name}</Text>
-                  </View>
-              </View> 
-            
+                <View style={styles.eventBoxTitle}>
+                  <Text>{item.name}</Text>
+                </View>
+              </View>
+
               <View style={styles.eventBoxImage}>
-              <Image
+                <Image
                   source={{ uri: item.profilePhoto }}
-                  style={{ width: 120, height: 90, borderRadius: 10}}
+                  style={{ width: 120, height: 90, borderRadius: 10 }}
                 />
               </View>
-              
-           
-           
             </TouchableOpacity>
           ) : (
             <View />
@@ -224,7 +259,7 @@ function WelcomeScreen() {
           <TextInput
             style={[styles.input, eventNameError && styles.inputError]}
             placeholder="GetTogether, wedding, meeting"
-            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
+            placeholderTextColor="rgba(0, 0, 0, 0.5)"
             onChangeText={(text) => {
               setEventName(text);
               setEventNameError(false); // Reset error state when user starts typing
@@ -236,7 +271,7 @@ function WelcomeScreen() {
           <TextInput
             style={styles.input}
             placeholder="Share your moments!"
-            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
+            placeholderTextColor="rgba(0, 0, 0, 0.5)"
             onChangeText={(text) => setEventDescription(text)}
           />
 
@@ -270,20 +305,19 @@ function WelcomeScreen() {
           </View>
 
           <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity
-                onPress={toggleModal}
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={styles.buttonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={createEvent}
-                style={[styles.button, styles.createButton]}
-              >
-                <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={toggleModal}
+              style={[styles.button, styles.cancelButton]}
+            >
+              <Text style={styles.buttonTextCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={createEvent}
+              style={[styles.button, styles.createButton]}
+            >
+              <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
+            </TouchableOpacity>
           </View>
-
         </View>
       </Modal>
     </View>
@@ -312,7 +346,7 @@ const styles = StyleSheet.create({
   },
 
   eventItem: {
-    width: "100%", 
+    width: "100%",
     height: 150,
     padding: 12,
     borderWidth: 1,
@@ -322,27 +356,26 @@ const styles = StyleSheet.create({
     margin: 5,
     backgroundColor: "#cbd7f3",
     position: "relative",
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    justifyContent: "center",
+    alignItems: "center",
   },
   subheading: {
     width: "120%",
     height: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    position: 'absolute',
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    position: "absolute",
     left: -2,
     bottom: -2, // Align the subheading box at the bottom of the parent box
   },
-  eventBoxTitle:{
-    justifyContent: 'center', 
-    alignItems: 'center',
+  eventBoxTitle: {
+    justifyContent: "center",
+    alignItems: "center",
     top: 10,
   },
-  eventBoxImage:{
-    justifyContent: 'center', 
-    alignItems: 'center',
+  eventBoxImage: {
+    justifyContent: "center",
+    alignItems: "center",
     top: -15,
-
   },
   createEvent: {
     fontSize: 30,
@@ -356,7 +389,7 @@ const styles = StyleSheet.create({
     marginVertical: 9, // Margin for vertical spacing
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: "rgba(0, 0, 0, 0.1)",
     margin: 15,
     padding: 15,
   },
@@ -372,7 +405,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     margin: 15,
   },
-  
+
   onoffInput: {
     marginLeft: 15,
   },
@@ -380,17 +413,16 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     flexGrow: 0,
-    margin: '8.8px 167px 0 0', 
-    padding: '30px 7px 18px', 
+    margin: "8.8px 167px 0 0",
+    padding: "30px 7px 18px",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: "rgba(0, 0, 0, 0.1)",
     margin: 15,
-    justifyContent: 'center', 
-    alignItems: 'center', 
-
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   eventPhoto: {},
   bottomNavBar: {
     flexDirection: "row",
@@ -409,10 +441,10 @@ const styles = StyleSheet.create({
   circleButton: {
     margin: 0,
     padding: 0,
-    width: 65, 
+    width: 65,
     height: 65,
     backgroundColor: "rgba(36, 96, 253, 1)",
-    borderRadius: 30, 
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 90,
@@ -423,7 +455,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderRadius: 10,
-    borderColor: '#2460fd',
+    borderColor: "#2460fd",
     marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
@@ -433,19 +465,17 @@ const styles = StyleSheet.create({
     height: 40,
     padding: 10,
     borderRadius: 10,
-    backgroundColor: '#2460fd',
+    backgroundColor: "#2460fd",
     marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
-
   },
-  buttonTextCancel:{
+  buttonTextCancel: {
     color: "black",
   },
-  buttonTextCreateEvent:{
+  buttonTextCreateEvent: {
     color: "white",
   },
- 
 });
 
 export default WelcomeScreen;

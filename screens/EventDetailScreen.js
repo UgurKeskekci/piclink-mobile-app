@@ -10,29 +10,30 @@ import {
   Button,
   Switch,
   Image,
-  Platform,
+  Platform, Alert
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import QRCode from "react-native-qrcode-svg"; // Import QRCode
 import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
+import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-  
+
   // Initialize navigation
   const navigation = useNavigation();
-  
+
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
   const [selectedImages, setSelectedImages] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [photoDescription, setPhotoDescription] = useState("");
-  const [gridImages, setGridImages] = useState([]); 
+  const [gridImages, setGridImages] = useState([]);
   const [generatedQRCode, setGeneratedQRCode] = useState(null);
 
   // Fetch and log user ID from AsyncStorage
@@ -54,12 +55,17 @@ const EventDetailScreen = ({ route }) => {
   // Fetch selected images from AsyncStorage
   const fetchSelectedImages = async () => {
     try {
-      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
+      const storedImages = await AsyncStorage.getItem(
+        `selectedImages_${eventId}`
+      );
       if (storedImages) {
         setSelectedImages(JSON.parse(storedImages));
       }
     } catch (error) {
-      console.error("Error retrieving selected images from AsyncStorage:", error);
+      console.error(
+        "Error retrieving selected images from AsyncStorage:",
+        error
+      );
     }
   };
 
@@ -101,7 +107,6 @@ const EventDetailScreen = ({ route }) => {
       const updatedImages = [...selectedImages, ...photoUrls];
       setSelectedImages(updatedImages);
       await storeSelectedImages(updatedImages);
-      
     } catch (error) {
       console.error("Error handling photo selection:", error);
     }
@@ -124,10 +129,12 @@ const EventDetailScreen = ({ route }) => {
     try {
       const photoUrls = [];
       for (const photoUri of photos) {
-        const imageName = photoUri.substring(photoUri.lastIndexOf('/') + 1);
+        const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
         const response = await fetch(photoUri);
         const blob = await response.blob();
-        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
+        const storageRef = storage
+          .ref()
+          .child(`eventPhotos/${eventId}/${imageName}`);
         await storageRef.put(blob);
         const downloadURL = await storageRef.getDownloadURL();
         photoUrls.push(downloadURL);
@@ -161,7 +168,7 @@ const EventDetailScreen = ({ route }) => {
     try {
       const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
       const listResult = await storageRef.listAll();
-      const photoUrls = listResult.items.map(item => item.getDownloadURL());
+      const photoUrls = listResult.items.map((item) => item.getDownloadURL());
       return Promise.all(photoUrls);
     } catch (error) {
       console.error("Error fetching existing photo URLs from Storage:", error);
@@ -174,8 +181,6 @@ const EventDetailScreen = ({ route }) => {
     setGeneratedQRCode(qrData);
     setModalVisible(false);
   };
-  
-  
 
   // Remove deleted photos from AsyncStorage
   useEffect(() => {
@@ -184,21 +189,28 @@ const EventDetailScreen = ({ route }) => {
 
   const removeDeletedPhotosFromAsyncStorage = async () => {
     try {
-      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
+      const storedImages = await AsyncStorage.getItem(
+        `selectedImages_${eventId}`
+      );
       if (storedImages) {
         const storedImageUris = JSON.parse(storedImages);
-        
+
         // Check each stored image URI if it exists in Firestore or Storage
         const existingPhotos = await fetchExistingPhotosFromFirestore();
-        const existingPhotoUrls = existingPhotos.map(photo => photo.url);
+        const existingPhotoUrls = existingPhotos.map((photo) => photo.url);
         const storagePhotoUrls = await fetchExistingPhotoUrlsFromStorage();
-        
+
         // Combine existing photo URLs from Firestore and Storage
-        const allExistingPhotoUrls = [...existingPhotoUrls, ...storagePhotoUrls];
-        
+        const allExistingPhotoUrls = [
+          ...existingPhotoUrls,
+          ...storagePhotoUrls,
+        ];
+
         // Filter out images that exist in either Firestore or Storage
-        const filteredImages = storedImageUris.filter(uri => allExistingPhotoUrls.includes(uri));
-        
+        const filteredImages = storedImageUris.filter((uri) =>
+          allExistingPhotoUrls.includes(uri)
+        );
+
         await AsyncStorage.setItem(
           `selectedImages_${eventId}`,
           JSON.stringify(filteredImages)
@@ -239,31 +251,72 @@ const EventDetailScreen = ({ route }) => {
   // Pick image from device gallery
   const pickImage = async () => {
     let permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (permissionResult.granted === false) {
-    alert("Permission to access camera roll is required!");
-    return;
-  }
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
 
-  let pickerResult = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-    multiple: true,
-  });
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+      multiple: true,
+    });
 
-  if (!pickerResult.cancelled) {
-    const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
-    console.log("Selected Images:", selectedImages);
-    await handlePhotoSelection(selectedPhotos);
-  }
-};
+    if (!pickerResult.cancelled) {
+      const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
+      console.log("Selected Images:", selectedImages);
+      await handlePhotoSelection(selectedPhotos);
+    }
+  };
+  const handleDownload = async () => {
+    try {
+      const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
+      await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
+  
+      // Loop through selectedImages and download each photo
+      for (let i = 0; i < selectedImages.length; i++) {
+        const photoUrl = selectedImages[i];
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf('/') + 1);
+        const downloadPath = downloadDir + '/' + fileName;
+  
+        // Download the photo
+        await FileSystem.downloadAsync(photoUrl, downloadPath);
+  
+        // Save the photo to the device's camera roll
+        if (Platform.OS === 'ios') {
+          const cameraDir = FileSystem.documentDirectory + 'camera';
+          await FileSystem.makeDirectoryAsync(cameraDir, { intermediates: true }); // Ensure the camera directory exists
+          await FileSystem.downloadAsync(photoUrl, cameraDir + '/' + fileName);
+        } else if (Platform.OS === 'android') {
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status === 'granted') {
+            await MediaLibrary.saveToLibraryAsync(downloadPath);
+          } else {
+            Alert.alert('Permission Required', 'Please grant permission to save photos.');
+            return;
+          }
+        }
+  
+        console.log('Downloaded:', fileName);
+      }
+  
+      Alert.alert(
+        'Download Complete',
+        'All photos have been downloaded and saved to your device.'
+      );
+    } catch (error) {
+      console.error('Error downloading photos:', error);
+      Alert.alert('Download Error', 'Failed to download photos. Please try again.');
+    }
+  };
+  
+  
   return (
-
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
-
 
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
@@ -272,38 +325,36 @@ const EventDetailScreen = ({ route }) => {
         <Text style={styles.triggerButtonText}>Show Popup</Text>
       </TouchableOpacity>
       <Modal
-  animationType="slide"
-  transparent={true}
-  visible={isModalVisible}
-  onRequestClose={() => setModalVisible(false)}
->
-  <View style={styles.centeredView}>
-    <View style={styles.modalView}>
-      {/* Updated onPress event handler */}
-      <Button title="Create QR" onPress={() => createQRCode()} />
-      
-      <Button title="Copy Invitation" onPress={() => console.log('Copy Invitation Pressed')} />
-      {/* Close Button */}
-      {/* Close Button as "X" */}
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => setModalVisible(false)}
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
       >
-        <Text style={styles.closeButtonText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-{generatedQRCode && (
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            {/* Updated onPress event handler */}
+            <Button title="Create QR" onPress={() => createQRCode()} />
+
+            <Button
+              title="Copy Invitation"
+              onPress={() => console.log("Copy Invitation Pressed")}
+            />
+            {/* Close Button */}
+            {/* Close Button as "X" */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {generatedQRCode && (
         <View style={styles.qrCodeContainer}>
-          <QRCode
-            value={generatedQRCode}
-            size={200}
-          />
+          <QRCode value={generatedQRCode} size={200} />
         </View>
       )}
-
-    
 
       <View style={styles.header}>
         <View style={styles.imageContainer}>
@@ -357,37 +408,47 @@ const EventDetailScreen = ({ route }) => {
             alignItems: "center",
           }}
         >
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+          <View
+            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+          >
             <Icon
-                name="search-outline"
-                size={15}
-                color="black"
-                style={{ paddingRight: 2, paddingLeft:10 }}
-              />
-             <Text style={{ paddingRight: 40 }}>Search</Text>
-        </View>
-         
+              name="search-outline"
+              size={15}
+              color="black"
+              style={{ paddingRight: 2, paddingLeft: 10 }}
+            />
+            <Text style={{ paddingRight: 40 }}>Search</Text>
+          </View>
 
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+          <View
+            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+          >
             <Icon
-                name="funnel-outline"
-                size={15}
-                color="black"
-                style={{ paddingRight: 2 }}
-              />
-              <Text style={{ paddingRight: 20 }}>Sort</Text>
-        </View>
-         
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
-             <Icon
-                 name="download-outline"
-                 size={15}
-                 color="black"
-                 style={{ paddingRight: 2 }}
-               />
-              <Text style={{ paddingRight: 20 }}>Download</Text>
-        </View>
-        
+              name="funnel-outline"
+              size={15}
+              color="black"
+              style={{ paddingRight: 2 }}
+            />
+            <Text style={{ paddingRight: 20 }}>Sort</Text>
+          </View>
+
+          <View
+  style={{
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+  }}
+>
+  <TouchableOpacity onPress={handleDownload}>
+    <Icon
+      name="download-outline"
+      size={15}
+      color="black"
+      style={{ paddingRight: 2 }}
+    />
+    <Text>Download</Text>
+  </TouchableOpacity>
+</View>
         </View>
       </View>
 
@@ -461,7 +522,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "black",
   },
-  
+
   gridContainer: {
     width: "100%",
     marginHorizontal: "auto",
@@ -530,52 +591,51 @@ const styles = StyleSheet.create({
   },
 
   // Add these to your StyleSheet object
-triggerButton: {
-  position: 'absolute',
-  right: 10,
-  top: 10,
-  backgroundColor: 'blue', // Feel free to change the color
-  padding: 8,
-  borderRadius: 20,
-  zIndex: 10, // Make sure the button is above other elements
-},
-triggerButtonText: {
-  color: '#fff',
-  fontSize: 20,
-},
-centeredView: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 22
-},
-modalView: {
-  margin: 20,
-  backgroundColor: "white",
-  borderRadius: 20,
-  padding: 35,
-  alignItems: "center",
-  shadowColor: "#000",
-  shadowOffset: {
-    width: 0,
-    height: 2
+  triggerButton: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    backgroundColor: "blue", // Feel free to change the color
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 10, // Make sure the button is above other elements
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5
-},
-closeButton: {
-  position: 'absolute',
-  top: 10,
-  right: 10,
-  backgroundColor: 'transparent',
-  padding: 8,
-},
-closeButtonText: {
-  color: 'blue',
-  fontSize: 24,
-},
-
+  triggerButtonText: {
+    color: "#fff",
+    fontSize: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "transparent",
+    padding: 8,
+  },
+  closeButtonText: {
+    color: "blue",
+    fontSize: 24,
+  },
 });
 
 export default EventDetailScreen;
