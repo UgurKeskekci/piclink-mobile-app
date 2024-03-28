@@ -11,11 +11,13 @@ import {
   Switch,
   Image,
   Platform,
+
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import QRCode from "react-native-qrcode-svg"; // Import QRCode
+import { Linking } from 'react-native';
 
 const EventDetailScreen = ({ route }) => {
   const { eventDescription, eventName, eventPhoto } = route.params;
@@ -26,6 +28,9 @@ const EventDetailScreen = ({ route }) => {
   const [photoDescription, setPhotoDescription] = useState("");
   const [gridImages, setGridImages] = useState([]); 
   const [generatedQRCode, setGeneratedQRCode] = useState(null);
+  const [isCopyLinkModalVisible, setCopyLinkModalVisible] = useState(false);
+  const [copySuccessMessage, setCopySuccessMessage] = useState('');
+
 
   const goToProfile = () => {
     navigation.navigate("Profile");
@@ -36,6 +41,20 @@ const EventDetailScreen = ({ route }) => {
     setGeneratedQRCode(qrData);
     setModalVisible(false);
   };
+  const copyInvitation = () => {
+    const invitationLink = "https://example.com/event";
+    console.log("Invitation link copied:", invitationLink);
+    
+    // Attempt to open the URL
+    Linking.openURL(invitationLink).catch((err) => {
+      console.error('An error occurred while trying to open the URL:', err);
+    });
+    
+    setCopyLinkModalVisible(true); // You might want to reconsider this modal if you're redirecting right away
+    setModalVisible(false); // Close the "Share" modal
+};
+
+
   
   
   const pickImage = async () => {
@@ -70,41 +89,78 @@ const EventDetailScreen = ({ route }) => {
         onPress={() => setModalVisible(true)}
         style={styles.triggerButton}
       >
-        <Text style={styles.triggerButtonText}>Show Popup</Text>
+        <Text style={styles.triggerButtonText}>Share</Text>
       </TouchableOpacity>
-      <Modal
-  animationType="slide"
-  transparent={true}
-  visible={isModalVisible}
-  onRequestClose={() => setModalVisible(false)}
->
-  <View style={styles.centeredView}>
-    <View style={styles.modalView}>
-      {/* Updated onPress event handler */}
-      <Button title="Create QR" onPress={() => createQRCode()} />
-      
-      <Button title="Copy Invitation" onPress={() => console.log('Copy Invitation Pressed')} />
-      {/* Close Button */}
-      {/* Close Button as "X" */}
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => setModalVisible(false)}
-      >
-        <Text style={styles.closeButtonText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-{generatedQRCode && (
-        <View style={styles.qrCodeContainer}>
-          <QRCode
-            value={generatedQRCode}
-            size={200}
-          />
-        </View>
-      )}
 
+     <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              {/* Updated onPress event handlers */}
+              <Button title="Create QR" onPress={createQRCode} />
+              <Button title="Copy Invitation" onPress={copyInvitation} />
+              {/* Close Button */}
+              {/* Close Button as "X" */}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>X</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+      </Modal>
+
+       {/* Display QR code in a separate pop-up */}
+       <Modal
+        animationType="slide"
+        transparent={true}
+        visible={generatedQRCode !== null} // Show modal only when QR code is generated
+        onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.QRModalView}>
+            {/* Display generated QR code */}
+            {generatedQRCode && (
+              <QRCode
+                value={generatedQRCode}
+                size={230}
+              />
+            )}
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
+            >
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     
+      <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isCopyLinkModalVisible}
+          onRequestClose={() => setCopyLinkModalVisible(false)}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.invitationModalView}>
+              <Text>Invitation Link: https://example.com/event</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setCopyLinkModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>X</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+      </Modal>
+
 
       <View style={styles.header}>
         <View style={styles.imageContainer}>
@@ -330,52 +386,91 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  // Add these to your StyleSheet object
-triggerButton: {
-  position: 'absolute',
-  right: 10,
-  top: 10,
-  backgroundColor: 'blue', // Feel free to change the color
-  padding: 8,
-  borderRadius: 20,
-  zIndex: 10, // Make sure the button is above other elements
-},
-triggerButtonText: {
-  color: '#fff',
-  fontSize: 20,
-},
-centeredView: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 22
-},
-modalView: {
-  margin: 20,
-  backgroundColor: "white",
-  borderRadius: 20,
-  padding: 35,
-  alignItems: "center",
-  shadowColor: "#000",
-  shadowOffset: {
-    width: 0,
-    height: 2
+  triggerButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    backgroundColor: 'rgba(36, 96, 253, 0.30)', 
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 10, // Make sure the button is above other elements
+    justifyContent: "center",
+    alignItems: "center",
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5
-},
-closeButton: {
-  position: 'absolute',
-  top: 10,
-  right: 10,
-  backgroundColor: 'transparent',
-  padding: 8,
-},
-closeButtonText: {
-  color: 'blue',
-  fontSize: 24,
-},
+  triggerButtonText: {
+    color: '#fff',
+    fontSize: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    width: 300,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  QRModalView: {
+    margin: 20,
+    width: 350,
+    minHeight: 450,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  invitationModalView: {
+    margin: 20,
+    width: 350,
+    minHeight: 150,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'transparent',
+    padding: 8,
+  },
+  closeButtonText: {
+    color: 'blue',
+    fontSize: 24,
+  },
 
 });
 
