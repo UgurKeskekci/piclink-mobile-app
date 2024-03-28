@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -18,6 +18,8 @@ import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, storage } from "../config";
 import { collection, addDoc, getDocs } from "firebase/firestore";
+import { ScrollView } from "react-native";
+
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
@@ -34,6 +36,9 @@ function WelcomeScreen() {
   const [eventNameError, setEventNameError] = useState(false);
   const [eventNameErrorMessage, setEventNameErrorMessage] = useState("");
   const [searchText, setSearchText] = useState(""); // Define setSearchText here
+  const scrollViewRef = useRef(null);
+
+
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -177,8 +182,15 @@ function WelcomeScreen() {
     }
   };
 
+  const scrollViewStyle = StyleSheet.compose(
+    styles.rootContainer,
+    // Add any additional styles specific to ScrollView here
+  );
+
   return (
-    <View style={styles.rootContainer}>
+    <View style={scrollViewStyle}>
+    <ScrollView ref={scrollViewRef} >
+    
       <TextInput
   style={styles.input}
   placeholder="Search events..."
@@ -225,23 +237,7 @@ function WelcomeScreen() {
         }
       />
 
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNavBar}>
-        <TouchableOpacity style={styles.navButton}>
-          <Icon name="home" size={30} color="blue" />
-          <Text>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.navButton, styles.circleButton]}
-          onPress={toggleModal}
-        >
-          <Icon name="add" size={30} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
-          <Icon name="person" size={30} color="blue" />
-          <Text>Profile</Text>
-        </TouchableOpacity>
-      </View>
+     
 
       {/* Event Creation Modal ----------------------------------------------------------------------------*/}
       <Modal
@@ -320,7 +316,28 @@ function WelcomeScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    
+        </ScrollView>
+
+         {/* Bottom Navigation Bar */}
+      <View style={styles.bottomNavBar }>
+        <TouchableOpacity style={styles.navButton} onPress={() => scrollViewRef.current.scrollTo({ y: 0, animated: true })}>
+          <Icon name="home" size={30} color="blue" />
+          <Text>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.navButton, styles.circleButton]}
+          onPress={toggleModal}
+        >
+          <Icon name="add" size={30} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
+          <Icon name="person" size={30} color="blue" />
+          <Text>Profile</Text>
+        </TouchableOpacity>
+      </View>
+        </View>
+
   );
 }
 
