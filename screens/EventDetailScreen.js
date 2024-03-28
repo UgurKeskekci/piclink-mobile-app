@@ -4,18 +4,21 @@ import {
   Text,
   View,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  FlatList,
+  Button,
+  Switch,
   Image,
+  Platform,
 } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
-<<<<<<< HEAD
+import QRCode from "react-native-qrcode-svg"; // Import QRCode
 import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
-=======
-import QRCode from "react-native-qrcode-svg"; // Import QRCode
->>>>>>> sude
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
@@ -27,13 +30,10 @@ const EventDetailScreen = ({ route }) => {
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
   const [selectedImages, setSelectedImages] = useState([]);
-<<<<<<< HEAD
-=======
   const [isModalVisible, setModalVisible] = useState(false);
   const [photoDescription, setPhotoDescription] = useState("");
   const [gridImages, setGridImages] = useState([]); 
   const [generatedQRCode, setGeneratedQRCode] = useState(null);
->>>>>>> sude
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -63,7 +63,6 @@ const EventDetailScreen = ({ route }) => {
     }
   };
 
-<<<<<<< HEAD
   useEffect(() => {
     fetchSelectedImages();
   }, [eventId]);
@@ -170,6 +169,14 @@ const EventDetailScreen = ({ route }) => {
     }
   };
 
+  const createQRCode = () => {
+    const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
+    setGeneratedQRCode(qrData);
+    setModalVisible(false);
+  };
+  
+  
+
   // Remove deleted photos from AsyncStorage
   useEffect(() => {
     removeDeletedPhotosFromAsyncStorage();
@@ -230,15 +237,6 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   // Pick image from device gallery
-=======
-  const createQRCode = () => {
-    const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
-    setGeneratedQRCode(qrData);
-    setModalVisible(false);
-  };
-  
-  
->>>>>>> sude
   const pickImage = async () => {
     let permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -395,7 +393,13 @@ const EventDetailScreen = ({ route }) => {
 
       {/* GRID LAYOUT FOR PHOTOS */}
       <View style={styles.gridContainer}>
-        {renderSelectedImages()}
+        {selectedImages.map((imageUri, index) => (
+          <Image
+            key={index}
+            source={{ uri: imageUri }}
+            style={styles.selectedImage}
+          />
+        ))}
       </View>
 
       {/* Bottom Navigation Bar */}
