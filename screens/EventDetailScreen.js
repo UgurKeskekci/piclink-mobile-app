@@ -10,8 +10,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
+<<<<<<< HEAD
 import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
+=======
+import QRCode from "react-native-qrcode-svg"; // Import QRCode
+>>>>>>> sude
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
@@ -23,6 +27,13 @@ const EventDetailScreen = ({ route }) => {
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
   const [selectedImages, setSelectedImages] = useState([]);
+<<<<<<< HEAD
+=======
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [photoDescription, setPhotoDescription] = useState("");
+  const [gridImages, setGridImages] = useState([]); 
+  const [generatedQRCode, setGeneratedQRCode] = useState(null);
+>>>>>>> sude
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -52,6 +63,7 @@ const EventDetailScreen = ({ route }) => {
     }
   };
 
+<<<<<<< HEAD
   useEffect(() => {
     fetchSelectedImages();
   }, [eventId]);
@@ -218,6 +230,15 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   // Pick image from device gallery
+=======
+  const createQRCode = () => {
+    const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
+    setGeneratedQRCode(qrData);
+    setModalVisible(false);
+  };
+  
+  
+>>>>>>> sude
   const pickImage = async () => {
     let permissionResult =
     await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -241,8 +262,51 @@ const EventDetailScreen = ({ route }) => {
   }
 };
   return (
+
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
+
+
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.triggerButton}
+      >
+        <Text style={styles.triggerButtonText}>Show Popup</Text>
+      </TouchableOpacity>
+      <Modal
+  animationType="slide"
+  transparent={true}
+  visible={isModalVisible}
+  onRequestClose={() => setModalVisible(false)}
+>
+  <View style={styles.centeredView}>
+    <View style={styles.modalView}>
+      {/* Updated onPress event handler */}
+      <Button title="Create QR" onPress={() => createQRCode()} />
+      
+      <Button title="Copy Invitation" onPress={() => console.log('Copy Invitation Pressed')} />
+      {/* Close Button */}
+      {/* Close Button as "X" */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => setModalVisible(false)}
+      >
+        <Text style={styles.closeButtonText}>X</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+{generatedQRCode && (
+        <View style={styles.qrCodeContainer}>
+          <QRCode
+            value={generatedQRCode}
+            size={200}
+          />
+        </View>
+      )}
+
+    
+
       <View style={styles.header}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: eventPhoto }} style={styles.image} />
@@ -258,7 +322,6 @@ const EventDetailScreen = ({ route }) => {
         <View
           style={{
             height: 60,
-            borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.30)",
             display: "flex",
@@ -269,14 +332,14 @@ const EventDetailScreen = ({ route }) => {
         >
           <Icon
             name="apps-outline"
-            size={40}
+            size={35}
             color="black"
             style={{ paddingLeft: 30 }}
           />
-          <Icon name="folder-open-outline" size={40} color="black" />
+          <Icon name="folder-open-outline" size={35} color="black" />
           <Icon
             name="pricetag-outline"
-            size={40}
+            size={35}
             color="black"
             style={{ paddingRight: 30 }}
           />
@@ -286,33 +349,47 @@ const EventDetailScreen = ({ route }) => {
       <View style={styles.separator2}>
         <View
           style={{
-            height: 20,
+            height: 40,
             borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.1)",
             display: "flex",
             flexDirection: "row",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
           }}
         >
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+            <Icon
+                name="search-outline"
+                size={15}
+                color="black"
+                style={{ paddingRight: 2, paddingLeft:10 }}
+              />
+             <Text style={{ paddingRight: 40 }}>Search</Text>
+        </View>
+         
+
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+            <Icon
+                name="funnel-outline"
+                size={15}
+                color="black"
+                style={{ paddingRight: 2 }}
+              />
+              <Text style={{ paddingRight: 20 }}>Sort</Text>
+        </View>
+         
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+             <Icon
+                 name="download-outline"
+                 size={15}
+                 color="black"
+                 style={{ paddingRight: 2 }}
+               />
+              <Text style={{ paddingRight: 20 }}>Download</Text>
+        </View>
         
-          <Icon
-            name="search-outline"
-            size={15}
-            color="black"
-            style={{ paddingRight: 2, paddingLeft:10 }}
-          />
-         <Text style={{ paddingRight: 40 }}>Search</Text>
-
-
-          <Icon
-            name="funnel-outline"
-            size={15}
-            color="black"
-            style={{ paddingRight: 2 }}
-          />
-          <Text style={{ paddingRight: 20 }}>Sort</Text>
         </View>
       </View>
 
@@ -362,7 +439,6 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     marginLeft: 10,
     marginTop: 10,
-    backgroundColor: "gray",
   },
   eventDesc: {
     flexDirection: "column",
@@ -422,11 +498,12 @@ const styles = StyleSheet.create({
     marginBottom: 90,
   },
   selectedImage: {
-    width: 100,
-    height: 100,
+    width: "31%",
+    height: 135,
     resizeMode: "cover",
-    borderRadius: 8,
     margin: 4,
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
     flex: 1,
@@ -447,6 +524,54 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
   },
+
+  // Add these to your StyleSheet object
+triggerButton: {
+  position: 'absolute',
+  right: 10,
+  top: 10,
+  backgroundColor: 'blue', // Feel free to change the color
+  padding: 8,
+  borderRadius: 20,
+  zIndex: 10, // Make sure the button is above other elements
+},
+triggerButtonText: {
+  color: '#fff',
+  fontSize: 20,
+},
+centeredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 22
+},
+modalView: {
+  margin: 20,
+  backgroundColor: "white",
+  borderRadius: 20,
+  padding: 35,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: {
+    width: 0,
+    height: 2
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5
+},
+closeButton: {
+  position: 'absolute',
+  top: 10,
+  right: 10,
+  backgroundColor: 'transparent',
+  padding: 8,
+},
+closeButtonText: {
+  color: 'blue',
+  fontSize: 24,
+},
+
 });
 
 export default EventDetailScreen;
