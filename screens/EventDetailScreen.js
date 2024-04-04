@@ -473,7 +473,7 @@ const EventDetailScreen = ({ route }) => {
           <View
             style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
           >
-            <Icon
+            <Icon  
               name="search-outline"
               size={15}
               color="black"

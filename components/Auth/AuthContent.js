@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View, Text, TouchableOpacity,Image } from 'react-native';
+import { Alert, StyleSheet, View, Text, TouchableOpacity,Image, Modal, TextInput, Button, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FlatButton from '../ui/FlatButton';
 import AuthForm from './AuthForm';
@@ -14,6 +14,8 @@ function AuthContent({ isLogin, onAuthenticate }) {
     confirmEmail: false,
     confirmPassword: false,
   });
+
+  
 
   function switchAuthModeHandler() {
     if (isLogin) {
@@ -34,6 +36,8 @@ function AuthContent({ isLogin, onAuthenticate }) {
     const emailsAreEqual = email === confirmEmail;
     const passwordsAreEqual = password === confirmPassword;
 
+
+
     if (
       !emailIsValid ||
       !passwordIsValid ||
@@ -51,6 +55,23 @@ function AuthContent({ isLogin, onAuthenticate }) {
     onAuthenticate({ email, password });
   }
 
+// FORGOT PASSWORD SECTION===========================================
+
+  const [forgotPasswordModalVisible, setForgotPasswordModalVisible] = useState(false);
+  const [email, setEmail] = useState('');
+
+  function handleForgotPassword() {
+    setForgotPasswordModalVisible(true);
+  }
+
+  function handleSendButton() {
+    Alert.alert(
+      'Reset Password',
+      'The reset link has been sent to your email address.'
+    );
+    setForgotPasswordModalVisible(false);
+  }
+
   return (
     <View style={styles.authContent}>
       <Image
@@ -66,10 +87,37 @@ function AuthContent({ isLogin, onAuthenticate }) {
         <FlatButton onPress={switchAuthModeHandler}>
           {isLogin ? 'Create a new user' : 'Log in instead'}
         </FlatButton>
+        <FlatButton onPress={handleForgotPassword}>
+          Forgot password?
+        </FlatButton>
         <TouchableOpacity onPress={() => console.log('Continue as Guest')} style={styles.continueGuest}>
           <Text style={{ textDecorationLine: 'underline' }}>Continue as Guest</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={forgotPasswordModalVisible}
+        onRequestClose={() => {
+          setForgotPasswordModalVisible(false);
+        }}
+      >
+        <TouchableWithoutFeedback onPress={() => setForgotPasswordModalVisible(false)}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text>Enter your email address:</Text>
+                <TextInput
+                  style={styles.input}
+                  onChangeText={setEmail}
+                  value={email}
+                  placeholder="Email Address"
+                />
+                <Button title="Send" onPress={handleSendButton} />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 }
@@ -99,5 +147,33 @@ const styles = StyleSheet.create({
   welcomeLogo:{
     width: 300,
     height: 200,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  input: {
+    height: 40,
+    width: '100%',
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
