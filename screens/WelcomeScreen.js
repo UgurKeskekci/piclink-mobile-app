@@ -189,15 +189,15 @@ function WelcomeScreen() {
 
   return (
     <View style={scrollViewStyle}>
-    <ScrollView ref={scrollViewRef} >
+    <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
     
       <TextInput
-  style={styles.input}
-  placeholder="Search events..."
-  placeholderTextColor="rgba(0, 0, 0, 0.5)"
-  onChangeText={handleSearch}
-  value={searchText} // Bind the value to searchText state
-/>
+        style={styles.inputSearch}
+        placeholder="Search events..."
+        placeholderTextColor="rgba(0, 0, 0, 0.5)"
+        onChangeText={handleSearch}
+        value={searchText} // Bind the value to searchText state
+      />
       <FlatList
         data={events}
         keyExtractor={(item) => item.id.toString()}
@@ -228,6 +228,7 @@ function WelcomeScreen() {
                 <Image
                   source={{ uri: item.profilePhoto }}
                   style={{ width: 120, height: 90, borderRadius: 10 }}
+                  
                 />
               </View>
             </TouchableOpacity>
@@ -248,7 +249,10 @@ function WelcomeScreen() {
       >
         <View style={styles.modalContainer}>
           <Text style={styles.createEvent}>Create Event</Text>
-          <Text style={styles.inputText}>Event Title</Text>
+          <Text style={styles.inputText}>
+              Event Title <Text style={{ color: "red" }}>*</Text>
+          </Text>
+
           {eventNameError && (
             <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
           )}
@@ -298,6 +302,7 @@ function WelcomeScreen() {
                 <Icon name="add" size={30} color="blue" />
               )}
             </TouchableOpacity>
+            
           </View>
 
           <View style={styles.modalButtonsContainer}>
@@ -346,7 +351,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32,
+    
   },
 
   modalContainer: {
@@ -354,12 +359,16 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     backgroundColor: "white",
     padding: 16,
+
   },
   modalButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-evenly",
+    alignItems: "center",
     width: "100%",
-    marginTop: 16,
+    position: "absolute",
+    bottom: 40,
+    
   },
 
   eventItem: {
@@ -397,11 +406,12 @@ const styles = StyleSheet.create({
   createEvent: {
     fontSize: 30,
     textAlign: "center",
-    margin: 50,
+    margin: 30,
+    marginTop: 90,
   },
   input: {
-    width: 330, // Width without units in React Native
-    height: 45, // Height without units in React Native
+    width: "90%", // Width without units in React Native
+    height: 65, // Height without units in React Native
     flexGrow: 0, // Use flexGrow property directly
     marginVertical: 9, // Margin for vertical spacing
     borderRadius: 10,
@@ -409,6 +419,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 0, 0, 0.1)",
     margin: 15,
     padding: 15,
+    fontSize: 20,
+  },
+  inputSearch: {
+    height: 60, // Height without units in React Native
+    flexGrow: 0, // Use flexGrow property directly
+    marginVertical: 9, // Margin for vertical spacing
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.1)",
+    margin: 10,
+    padding: 15,
+    fontSize: 20,
   },
   inputError: {
     borderColor: "red", // Change border color to red when there's an error
@@ -419,7 +441,7 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Adjust spacing as needed
   },
   inputText: {
-    fontSize: 16,
+    fontSize: 24,
     margin: 15,
   },
 
@@ -450,7 +472,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 90,
-    backgroundColor: "rgba(36, 96, 253, 0.10)",
+    backgroundColor: "#cbd7f3",
   },
   navButton: {
     alignItems: "center",
@@ -467,31 +489,33 @@ const styles = StyleSheet.create({
     marginBottom: 90,
   },
   cancelButton: {
-    width: "45%",
-    height: 40,
+    width: "48%",
+    height: 60,
     padding: 10,
     borderWidth: 1,
     borderRadius: 10,
     borderColor: "#2460fd",
-    marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
+    margin:30,
   },
   createButton: {
-    width: "45%",
-    height: 40,
+    width: "48%",
+    height: 60,
     padding: 10,
     borderRadius: 10,
     backgroundColor: "#2460fd",
-    marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
+    
   },
   buttonTextCancel: {
     color: "black",
+    fontSize: 18,
   },
   buttonTextCreateEvent: {
     color: "white",
+    fontSize: 18,
   },
 });
 
