@@ -17,8 +17,9 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from "../config";
-import { collection, addDoc, getDocs } from "firebase/firestore";
-
+import { collection, collectionGroup, addDoc, getDoc, getDocs, doc } from "firebase/firestore";
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
@@ -34,6 +35,16 @@ function WelcomeScreen() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
   const [eventNameError, setEventNameError] = useState(false);
   const [eventNameErrorMessage, setEventNameErrorMessage] = useState("");
+  const [isExistingEventModalVisible, setExistingEventModalVisible] = useState(false);
+  const [existingEventInput, setExistingEventInput] = useState("");
+  const [addEventError, setAddEventError] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
+  const toggleExistingEventModal = () => {
+    setExistingEventModalVisible(!isExistingEventModalVisible);
+  };
+
+
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -58,6 +69,7 @@ function WelcomeScreen() {
           const snapshot = await getDocs(eventsQuery);
           const loadedEvents = snapshot.docs.map(doc => ({
             id: doc.id,
+            eventId: doc.data().eventId, // Include eventId in the event data
             name: doc.data().name,
             ...doc.data(),
           }));
@@ -71,10 +83,12 @@ function WelcomeScreen() {
   }, [userId]);
 
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
     setEventProfilePhoto("");
   };
+  
 
   const handleImagePicker = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -98,11 +112,11 @@ function WelcomeScreen() {
       }
     }
   };
-  
 
   const addEventDataToFirestore = async () => {
     try {
       const docRef = await addDoc(collection(db, `users/${userId}/events`), {
+        eventId: Math.random().toString(36).substring(2), // Generate unique eventId
         name: eventName,
         description: eventDescription,
         profilePhoto: eventProfilePhoto,
@@ -112,7 +126,6 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
-  
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -127,6 +140,7 @@ function WelcomeScreen() {
     addEventDataToFirestore();
     const newEvent = {
       id: events.length + 1,
+      eventId: Math.random().toString(36).substring(2), // Generate unique eventId
       name: eventName,
       description: eventDescription,
       profilePhoto: eventProfilePhoto,
@@ -143,9 +157,73 @@ function WelcomeScreen() {
   const goToProfile = () => {
     navigation.navigate('Profile'); 
   };
+  
+  const addExistingEvent = async () => {
+    try {
+      const enteredEventId = existingEventInput.trim();
+  
+      // Fetch events from all users
+      const eventsQuery = collectionGroup(db, 'events');
+      const snapshot = await getDocs(eventsQuery);
+      const allEvents = snapshot.docs.map(doc => ({
+        id: doc.id,
+        userId: doc.ref.parent.parent.id, // Get the user ID
+        ...doc.data(),
+      }));
+  
+      // Search for the event by ID
+      const matchingEvent = allEvents.find(event => event.id === enteredEventId);
+  
+      if (matchingEvent) {
+        // Add the event to the current user's database
+        const newDocRef = await addDoc(collection(db, `users/${userId}/events`), matchingEvent);
+        console.log("Event added with ID:", newDocRef.id);
+  
+        // Update the events state with the newly added event
+        setEvents(prevEvents => [...prevEvents, matchingEvent]);
+  
+        setAddEventError("");
+        toggleExistingEventModal();
+      } else {
+        setAddEventError("Event not found. Please enter a valid event ID.");
+      }
+    } catch (error) {
+      console.error("Error adding existing event:", error);
+      setAddEventError("Error adding existing event. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.rootContainer}>
+         <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
+        <Text>Add Existing Event</Text>
+      </TouchableOpacity>
+
+      {/* Existing Event Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isExistingEventModalVisible}
+        onRequestClose={toggleExistingEventModal}
+      >
+        <View style={styles.modalContainer}>
+        <TextInput
+  style={styles.input}
+  placeholder="Enter event ID "
+  value={existingEventInput}  // Ensure that the value is bound to existingEventInput
+  onChangeText={setExistingEventInput}  // Ensure that onChangeText updates existingEventInput
+/>
+
+
+          <TouchableOpacity onPress={addExistingEvent} style={styles.addButton}>
+            <Text>Add Event</Text>
+          </TouchableOpacity>
+          {addEventError !== "" && <Text style={styles.errorText}>{addEventError}</Text>}
+          <TouchableOpacity onPress={toggleExistingEventModal} style={styles.cancelButton}>
+            <Text>Cancel</Text>
+            </TouchableOpacity>
+        </View>
+      </Modal>
       <FlatList
         data={events}
         keyExtractor={(item) => item.id.toString()}
@@ -179,7 +257,7 @@ function WelcomeScreen() {
           )
         }
       />
-
+    
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>

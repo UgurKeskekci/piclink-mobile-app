@@ -40,92 +40,16 @@ const EventDetailScreen = ({ route }) => {
     fetchAndLogUid();
   }, []);
 
-  // Fetch selected images from AsyncStorage
-  const fetchSelectedImages = async () => {
+  // Fetch selected images from Firestore and Firebase Storage
+  const fetchPhotos = async () => {
     try {
-      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
-      if (storedImages) {
-        setSelectedImages(JSON.parse(storedImages));
-      }
+      const firestorePhotos = await fetchExistingPhotosFromFirestore();
+      const storagePhotos = await fetchExistingPhotoUrlsFromStorage();
+      // Combine and return both sets of photos
+      return [...firestorePhotos, ...storagePhotos];
     } catch (error) {
-      console.error("Error retrieving selected images from AsyncStorage:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchSelectedImages();
-  }, [eventId]);
-
-  // Navigate to profile screen
-  const goToProfile = () => {
-    navigation.navigate("Profile", {
-      screen: "EventDetail",
-      params: {
-        eventId,
-        eventDescription,
-        eventName,
-        eventPhoto,
-      },
-    });
-  };
-
-  // Store selected images in AsyncStorage
-  const storeSelectedImages = async (images) => {
-    try {
-      await AsyncStorage.setItem(
-        `selectedImages_${eventId}`,
-        JSON.stringify(images)
-      );
-    } catch (error) {
-      console.error("Error storing selected images in AsyncStorage:", error);
-    }
-  };
-
-  // Handle photo selection from image picker
-  const handlePhotoSelection = async (selectedPhotos) => {
-    console.log("Handling photo selection...");
-    try {
-      const photoUrls = await uploadPhotosToStorage(selectedPhotos);
-      await storePhotoUrlsInFirestore(photoUrls);
-      const updatedImages = [...selectedImages, ...photoUrls];
-      setSelectedImages(updatedImages);
-      await storeSelectedImages(updatedImages);
-      
-    } catch (error) {
-      console.error("Error handling photo selection:", error);
-    }
-  };
-
-  // Render selected images
-  const renderSelectedImages = () => {
-    console.log("Rendering selected images...");
-    return selectedImages.map((imageUri, index) => (
-      <Image
-        key={index}
-        source={{ uri: imageUri }}
-        style={styles.selectedImage}
-      />
-    ));
-  };
-
-  // Upload photos to Firebase Storage
-  const uploadPhotosToStorage = async (photos) => {
-    try {
-      const photoUrls = [];
-      for (const photoUri of photos) {
-        const imageName = photoUri.substring(photoUri.lastIndexOf('/') + 1);
-        const response = await fetch(photoUri);
-        const blob = await response.blob();
-        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
-        await storageRef.put(blob);
-        const downloadURL = await storageRef.getDownloadURL();
-        photoUrls.push(downloadURL);
-        console.log("Download URL:", downloadURL);
-      }
-      return photoUrls;
-    } catch (error) {
-      console.error("Error uploading photos to Firebase Storage:", error);
-      throw error;
+      console.error("Error fetching photos:", error);
+      return [];
     }
   };
 
@@ -150,47 +74,97 @@ const EventDetailScreen = ({ route }) => {
     try {
       const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
       const listResult = await storageRef.listAll();
-      const photoUrls = listResult.items.map(item => item.getDownloadURL());
-      return Promise.all(photoUrls);
+      const photoUrls = [];
+      await Promise.all(listResult.items.map(async (item) => {
+        const downloadURL = await item.getDownloadURL();
+        photoUrls.push(downloadURL);
+      }));
+      return photoUrls;
     } catch (error) {
       console.error("Error fetching existing photo URLs from Storage:", error);
       return [];
     }
   };
 
-  // Remove deleted photos from AsyncStorage
+  // Fetch photos when component mounts
   useEffect(() => {
-    removeDeletedPhotosFromAsyncStorage();
-  }, [eventId]);
+    const fetchPhotosAndUpdateState = async () => {
+      const photos = await fetchPhotos();
+      setSelectedImages(photos);
+    };
+    fetchPhotosAndUpdateState();
+  }, []);
 
-  const removeDeletedPhotosFromAsyncStorage = async () => {
-    try {
-      const storedImages = await AsyncStorage.getItem(`selectedImages_${eventId}`);
-      if (storedImages) {
-        const storedImageUris = JSON.parse(storedImages);
-        
-        // Check each stored image URI if it exists in Firestore or Storage
-        const existingPhotos = await fetchExistingPhotosFromFirestore();
-        const existingPhotoUrls = existingPhotos.map(photo => photo.url);
-        const storagePhotoUrls = await fetchExistingPhotoUrlsFromStorage();
-        
-        // Combine existing photo URLs from Firestore and Storage
-        const allExistingPhotoUrls = [...existingPhotoUrls, ...storagePhotoUrls];
-        
-        // Filter out images that exist in either Firestore or Storage
-        const filteredImages = storedImageUris.filter(uri => allExistingPhotoUrls.includes(uri));
-        
-        await AsyncStorage.setItem(
-          `selectedImages_${eventId}`,
-          JSON.stringify(filteredImages)
-        );
-        setSelectedImages(filteredImages);
-      }
-    } catch (error) {
-      console.error("Error removing deleted photos from AsyncStorage:", error);
+  // Navigate to profile screen
+  const goToProfile = () => {
+    navigation.navigate("Profile", {
+      screen: "EventDetail",
+      params: {
+        eventId,
+        eventDescription,
+        eventName,
+        eventPhoto,
+      },
+    });
+  };
+
+  // Pick image from device gallery
+  const pickImage = async () => {
+    let permissionResult =
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+      multiple: true,
+    });
+
+    if (!pickerResult.cancelled) {
+      const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
+      await handlePhotoSelection(selectedPhotos);
     }
   };
 
+  // Handle photo selection from image picker
+  const handlePhotoSelection = async (selectedPhotos) => {
+    console.log("Handling photo selection...");
+    try {
+      const photoUrls = await uploadPhotosToStorage(selectedPhotos);
+      await storePhotoUrlsInFirestore(photoUrls);
+      const updatedImages = [...selectedImages, ...photoUrls];
+      setSelectedImages(updatedImages);
+    } catch (error) {
+      console.error("Error handling photo selection:", error);
+    }
+  };
+
+  // Upload photos to Firebase Storage
+  const uploadPhotosToStorage = async (photos) => {
+    try {
+      const photoUrls = [];
+      for (const photoUri of photos) {
+        const imageName = photoUri.substring(photoUri.lastIndexOf('/') + 1);
+        const response = await fetch(photoUri);
+        const blob = await response.blob();
+        // Update storage path to include event ID
+        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
+        await storageRef.put(blob);
+        const downloadURL = await storageRef.getDownloadURL();
+        photoUrls.push(downloadURL);
+      }
+      return photoUrls;
+    } catch (error) {
+      console.error("Error uploading photos to Firebase Storage:", error);
+      throw error;
+    }
+  };
+  
   // Store photo URLs in Firestore
   const storePhotoUrlsInFirestore = async (urls) => {
     try {
@@ -217,29 +191,17 @@ const EventDetailScreen = ({ route }) => {
       console.error("Error storing photo URLs in Firestore:", error);
     }
   };
-  // Pick image from device gallery
-  const pickImage = async () => {
-    let permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (permissionResult.granted === false) {
-    alert("Permission to access camera roll is required!");
-    return;
-  }
-
-  let pickerResult = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-    multiple: true,
-  });
-
-  if (!pickerResult.cancelled) {
-    const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
-    console.log("Selected Images:", selectedImages);
-    await handlePhotoSelection(selectedPhotos);
-  }
-};
+  // Render selected images
+  const renderSelectedImages = () => {
+    return selectedImages.map((imageUri, index) => (
+      <Image
+        key={index}
+        source={{ uri: imageUri }}
+        style={styles.selectedImage}
+      />
+    ));
+  };
+  
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
