@@ -88,7 +88,7 @@ function WelcomeScreen() {
     setModalVisible(!isModalVisible);
     setEventProfilePhoto("");
   };
-  
+
 
   const handleImagePicker = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -155,13 +155,13 @@ function WelcomeScreen() {
   };
 
   const goToProfile = () => {
-    navigation.navigate('Profile'); 
+    navigation.navigate('Profile');
   };
-  
+
   const addExistingEvent = async () => {
     try {
       const enteredEventId = existingEventInput.trim();
-  
+
       // Fetch events from all users
       const eventsQuery = collectionGroup(db, 'events');
       const snapshot = await getDocs(eventsQuery);
@@ -170,18 +170,18 @@ function WelcomeScreen() {
         userId: doc.ref.parent.parent.id, // Get the user ID
         ...doc.data(),
       }));
-  
+
       // Search for the event by ID
       const matchingEvent = allEvents.find(event => event.id === enteredEventId);
-  
+
       if (matchingEvent) {
         // Add the event to the current user's database
         const newDocRef = await addDoc(collection(db, `users/${userId}/events`), matchingEvent);
         console.log("Event added with ID:", newDocRef.id);
-  
+
         // Update the events state with the newly added event
         setEvents(prevEvents => [...prevEvents, matchingEvent]);
-  
+
         setAddEventError("");
         toggleExistingEventModal();
       } else {
@@ -195,7 +195,7 @@ function WelcomeScreen() {
 
   return (
     <View style={styles.rootContainer}>
-         <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
+      <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
         <Text>Add Existing Event</Text>
       </TouchableOpacity>
 
@@ -207,12 +207,12 @@ function WelcomeScreen() {
         onRequestClose={toggleExistingEventModal}
       >
         <View style={styles.modalContainer}>
-        <TextInput
-  style={styles.input}
-  placeholder="Enter event ID "
-  value={existingEventInput}  // Ensure that the value is bound to existingEventInput
-  onChangeText={setExistingEventInput}  // Ensure that onChangeText updates existingEventInput
-/>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter event ID "
+            value={existingEventInput}  // Ensure that the value is bound to existingEventInput
+            onChangeText={setExistingEventInput}  // Ensure that onChangeText updates existingEventInput
+          />
 
 
           <TouchableOpacity onPress={addExistingEvent} style={styles.addButton}>
@@ -221,7 +221,7 @@ function WelcomeScreen() {
           {addEventError !== "" && <Text style={styles.errorText}>{addEventError}</Text>}
           <TouchableOpacity onPress={toggleExistingEventModal} style={styles.cancelButton}>
             <Text>Cancel</Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
         </View>
       </Modal>
       <FlatList
@@ -234,7 +234,7 @@ function WelcomeScreen() {
               style={styles.eventItem}
               onPress={() =>
                 navigation.navigate("EventDetail", {
-                  eventId: item.id, 
+                  eventId: item.id,
                   eventName: item.name,
                   eventDescription: item.description,
                   eventPhoto: item.profilePhoto,
@@ -243,21 +243,21 @@ function WelcomeScreen() {
             >
               <Text>{item.name}</Text>
               <Text>{item.description}</Text>
-              <View style={styles.subheading}></View> 
-            
-                <Image
-                  source={{ uri: item.profilePhoto }}
-                  style={{ width: 98, height: 50, marginLeft: -12 }}
-                />
-           
-           
+              <View style={styles.subheading}></View>
+
+              <Image
+                source={{ uri: item.profilePhoto }}
+                style={{ width: 98, height: 50, marginLeft: -12 }}
+              />
+
+
             </TouchableOpacity>
           ) : (
             <View />
           )
         }
       />
-    
+
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
@@ -292,7 +292,7 @@ function WelcomeScreen() {
           <TextInput
             style={[styles.input, eventNameError && styles.inputError]}
             placeholder="GetTogether, wedding, meeting"
-            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
+            placeholderTextColor="rgba(0, 0, 0, 0.5)"
             onChangeText={(text) => {
               setEventName(text);
               setEventNameError(false); // Reset error state when user starts typing
@@ -304,7 +304,7 @@ function WelcomeScreen() {
           <TextInput
             style={styles.input}
             placeholder="Share your moments!"
-            placeholderTextColor="rgba(0, 0, 0, 0.5)" 
+            placeholderTextColor="rgba(0, 0, 0, 0.5)"
             onChangeText={(text) => setEventDescription(text)}
           />
 
@@ -338,18 +338,18 @@ function WelcomeScreen() {
           </View>
 
           <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity
-                onPress={toggleModal}
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={styles.buttonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={createEvent}
-                style={[styles.button, styles.createButton]}
-              >
-                <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={toggleModal}
+              style={[styles.button, styles.cancelButton]}
+            >
+              <Text style={styles.buttonTextCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={createEvent}
+              style={[styles.button, styles.createButton]}
+            >
+              <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
+            </TouchableOpacity>
           </View>
 
         </View>
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     margin: 15,
   },
-  
+
   onoffInput: {
     marginLeft: 15,
   },
@@ -435,17 +435,17 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     flexGrow: 0,
-    margin: '8.8px 167px 0 0', 
-    padding: '30px 7px 18px', 
+    margin: '8.8px 167px 0 0',
+    padding: '30px 7px 18px',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.1)',
     margin: 15,
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    justifyContent: 'center',
+    alignItems: 'center',
 
   },
-  
+
   eventPhoto: {},
   bottomNavBar: {
     flexDirection: "row",
@@ -464,10 +464,10 @@ const styles = StyleSheet.create({
   circleButton: {
     margin: 0,
     padding: 0,
-    width: 65, 
+    width: 65,
     height: 65,
     backgroundColor: "rgba(36, 96, 253, 1)",
-    borderRadius: 30, 
+    borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 90,
@@ -494,10 +494,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
 
   },
-  buttonTextCancel:{
+  buttonTextCancel: {
     color: "black",
   },
-  buttonTextCreateEvent:{
+  buttonTextCreateEvent: {
     color: "white",
   },
 });
