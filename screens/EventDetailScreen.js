@@ -233,33 +233,9 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   // Pick image from device gallery
-  const pickImage = async () => {
-    let permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (permissionResult.granted === false) {
-    alert("Permission to access camera roll is required!");
-    return;
-  }
+  
 
-  let pickerResult = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-    multiple: true,
-  });
 
-    if (!pickerResult.cancelled) {
-      const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
-      console.log("Selected Images:", selectedImages);
-      await handlePhotoSelection(selectedPhotos);
-    }
-  };
-
-<<<<<<< HEAD
-
-=======
->>>>>>> passwordScreens
   const handleDownload = async () => {
     try {
       const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
@@ -294,11 +270,17 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   
-<<<<<<< HEAD
-=======
+  const renderSelectedImages = () => {
+    console.log("Rendering selected images...");
+    return selectedImages.map((imageUri, index) => (
+      <Image
+        key={index}
+        source={{ uri: imageUri }}
+        style={styles.selectedImage}
+      />
+    ));
+  };
 
-
->>>>>>> passwordScreens
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
