@@ -48,10 +48,12 @@ function WelcomeScreen() {
   const [existingEventInput, setExistingEventInput] = useState("");
   const [addEventError, setAddEventError] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const scrollViewRef = useRef(null);
 
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
+  const [searchText, setSearchText] = useState(""); // Define setSearchText here
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -222,108 +224,107 @@ function WelcomeScreen() {
     }
   };
 
-  return (
-    <View style={styles.rootContainer}>
-      <TouchableOpacity
-        onPress={toggleExistingEventModal}
-        style={styles.addButton}
-      >
-        <Text>Add Existing Event</Text>
-      </TouchableOpacity>
+  const scrollViewStyle = StyleSheet.compose(
+    styles.rootContainer,
+    // Add any additional styles specific to ScrollView here
+  );
 
-      {/* Existing Event Modal */}
+
+  const handleSearch = (text) => {
+    setSearchText(text); // Update the local state with the current search text
+  
+    if (text.trim() === "") {
+      // If the search text is empty, fetch all events
+      fetchEvents();
+    } else {
+      const formattedSearchText = text.toLowerCase();
+  
+      const filteredEvents = events.filter((event) => {
+        const eventName = event.name.toLowerCase();
+        return eventName.includes(formattedSearchText);
+      });
+      setEvents(filteredEvents); // Update the events state with filtered events
+    }
+  };
+  return (
+    <View style={scrollViewStyle}>
+    <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
+    
+      <TextInput
+        style={styles.inputSearch}
+        placeholder="Search events..."
+        placeholderTextColor="rgba(0, 0, 0, 0.5)"
+        onChangeText={handleSearch}
+        value={searchText} // Bind the value to searchText state
+      />
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        renderItem={({ item }) =>
+          item ? (
+            <TouchableOpacity
+              style={[
+                styles.eventItem,
+                { width: events.length > 1 ? "47%" : "70%" },
+              ]}
+              onPress={() =>
+                navigation.navigate("EventDetail", {
+                  eventId: item.id,
+                  eventName: item.name,
+                  eventDescription: item.description,
+                  eventPhoto: item.profilePhoto,
+                })
+              }
+            >
+              <View style={styles.subheading}>
+                <View style={styles.eventBoxTitle}>
+                  <Text>{item.name}</Text>
+                </View>
+              </View>
+
+              <View style={styles.eventBoxImage}>
+                <Image
+                  source={{ uri: item.profilePhoto }}
+                  style={{ width: 120, height: 90, borderRadius: 10 }}
+                  
+                />
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View />
+          )
+        }
+      />
+
+     
+
+      {/* Event Creation Modal ----------------------------------------------------------------------------*/}
       <Modal
         animationType="slide"
         transparent={true}
-        visible={isExistingEventModalVisible}
-        onRequestClose={toggleExistingEventModal}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}
       >
         <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter event ID "
-            value={existingEventInput} // Ensure that the value is bound to existingEventInput
-            onChangeText={setExistingEventInput} // Ensure that onChangeText updates existingEventInput
-          />
+          <Text style={styles.createEvent}>Create Event</Text>
+          <Text style={styles.inputText}>
+              Event Title <Text style={{ color: "red" }}>*</Text>
+          </Text>
 
-          <TouchableOpacity onPress={addExistingEvent} style={styles.addButton}>
-            <Text>Add Event</Text>
-          </TouchableOpacity>
-          {addEventError !== "" && (
-            <Text style={styles.errorText}>{addEventError}</Text>
+          {eventNameError && (
+            <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
           )}
-          <TouchableOpacity
-            onPress={toggleExistingEventModal}
-            style={styles.cancelButton}
-          >
-            <Text>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-      <ScrollView>
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          renderItem={({ item }) =>
-            item ? (
-              <TouchableOpacity
-                style={[
-                  styles.eventItem,
-                  { width: events.length > 1 ? "47%" : "70%" },
-                ]}
-                onPress={() =>
-                  navigation.navigate("EventDetail", {
-                    eventId: item.id,
-                    eventName: item.name,
-                    eventDescription: item.description,
-                    eventPhoto: item.profilePhoto,
-                  })
-                }
-              >
-                <View style={styles.subheading}>
-                  <View style={styles.eventBoxTitle}>
-                    <Text>{item.name}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.eventBoxImage}>
-                  <Image
-                    source={{ uri: item.profilePhoto }}
-                    style={{ width: 120, height: 90, borderRadius: 10 }}
-                  />
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <View />
-            )
-          }
-        />
-
-      
-        {/* Event Creation Modal ----------------------------------------------------------------------------*/}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={isModalVisible}
-          onRequestClose={toggleModal}
-        >
-          <View style={styles.modalContainer}>
-            <Text style={styles.createEvent}>Create Event</Text>
-            <Text style={styles.inputText}>Event Title</Text>
-            {eventNameError && (
-              <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
-            )}
-            <TextInput
-              style={[styles.input, eventNameError && styles.inputError]}
-              placeholder="GetTogether, wedding, meeting"
-              placeholderTextColor="rgba(0, 0, 0, 0.5)"
-              onChangeText={(text) => {
-                setEventName(text);
-                setEventNameError(false); // Reset error state when user starts typing
-                setEventNameErrorMessage(""); // Reset error message when user starts typing
-              }}
-            />
+          <TextInput
+            style={[styles.input, eventNameError && styles.inputError]}
+            placeholder="GetTogether, wedding, meeting"
+            placeholderTextColor="rgba(0, 0, 0, 0.5)"
+            onChangeText={(text) => {
+              setEventName(text);
+              setEventNameError(false); // Reset error state when user starts typing
+              setEventNameErrorMessage(""); // Reset error message when user starts typing
+            }}
+          />
 
             <Text style={styles.inputText}>Event Description</Text>
             <TextInput
@@ -345,22 +346,23 @@ function WelcomeScreen() {
               />
             </View>
 
-            <View>
-              <Text style={styles.inputText}>Add Event Profile Photo</Text>
-              <TouchableOpacity
-                style={styles.eventPhotoButton}
-                onPress={handleImagePicker}
-              >
-                {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
-                  <Image
-                    source={{ uri: eventProfilePhoto }}
-                    style={{ width: 70, height: 70, borderRadius: 50 }}
-                  />
-                ) : (
-                  <Icon name="add" size={30} color="blue" />
-                )}
-              </TouchableOpacity>
-            </View>
+          <View>
+            <Text style={styles.inputText}>Add Event Profile Photo</Text>
+            <TouchableOpacity
+              style={styles.eventPhotoButton}
+              onPress={handleImagePicker}
+            >
+              {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
+                <Image
+                  source={{ uri: eventProfilePhoto }}
+                  style={{ width: 70, height: 70, borderRadius: 50 }}
+                />
+              ) : (
+                <Icon name="add" size={30} color="blue" />
+              )}
+            </TouchableOpacity>
+            
+          </View>
 
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32,
+    
   },
 
   modalContainer: {
@@ -419,12 +421,16 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     backgroundColor: "white",
     padding: 16,
+
   },
   modalButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-evenly",
+    alignItems: "center",
     width: "100%",
-    marginTop: 16,
+    position: "absolute",
+    bottom: 40,
+    
   },
 
   eventItem: {
@@ -462,11 +468,12 @@ const styles = StyleSheet.create({
   createEvent: {
     fontSize: 30,
     textAlign: "center",
-    margin: 50,
+    margin: 30,
+    marginTop: 90,
   },
   input: {
-    width: 330, // Width without units in React Native
-    height: 45, // Height without units in React Native
+    width: "90%", // Width without units in React Native
+    height: 65, // Height without units in React Native
     flexGrow: 0, // Use flexGrow property directly
     marginVertical: 9, // Margin for vertical spacing
     borderRadius: 10,
@@ -474,6 +481,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 0, 0, 0.1)",
     margin: 15,
     padding: 15,
+    fontSize: 20,
+  },
+  inputSearch: {
+    height: 60, // Height without units in React Native
+    flexGrow: 0, // Use flexGrow property directly
+    marginVertical: 9, // Margin for vertical spacing
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.1)",
+    margin: 10,
+    padding: 15,
+    fontSize: 20,
   },
   inputError: {
     borderColor: "red", // Change border color to red when there's an error
@@ -484,7 +503,7 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Adjust spacing as needed
   },
   inputText: {
-    fontSize: 16,
+    fontSize: 24,
     margin: 15,
   },
 
@@ -515,7 +534,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 90,
-    backgroundColor: "rgba(36, 96, 253, 0.10)",
+    backgroundColor: "#cbd7f3",
   },
   navButton: {
     alignItems: "center",
@@ -532,31 +551,33 @@ const styles = StyleSheet.create({
     marginBottom: 90,
   },
   cancelButton: {
-    width: "45%",
-    height: 40,
+    width: "48%",
+    height: 60,
     padding: 10,
     borderWidth: 1,
     borderRadius: 10,
     borderColor: "#2460fd",
-    marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
+    margin:30,
   },
   createButton: {
-    width: "45%",
-    height: 40,
+    width: "48%",
+    height: 60,
     padding: 10,
     borderRadius: 10,
     backgroundColor: "#2460fd",
-    marginTop: 60,
     justifyContent: "center",
     alignItems: "center",
+    
   },
   buttonTextCancel: {
     color: "black",
+    fontSize: 18,
   },
   buttonTextCreateEvent: {
     color: "white",
+    fontSize: 18,
   },
 });
 

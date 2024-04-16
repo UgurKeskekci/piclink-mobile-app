@@ -31,7 +31,14 @@ const EventDetailScreen = ({ route }) => {
   
   // Initialize navigation
   const navigation = useNavigation();
-  
+
+
+const EventQRCode = ({ eventId }) => {
+  return <QRCode value={eventId.toString()} />;
+};
+
+  // State variables
+  const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
   const [selectedImages, setSelectedImages] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [photoDescription, setPhotoDescription] = useState("");
@@ -193,6 +200,7 @@ const EventDetailScreen = ({ route }) => {
     setModalVisible(false);
   };
 
+  
   const copyInvitation = () => {
     const invitationLink = "https://example.com/event";
     console.log("Invitation link copied:", invitationLink);
@@ -317,25 +325,26 @@ const EventDetailScreen = ({ route }) => {
 
       {/* Display QR code in a separate pop-up */}
       <Modal
-        animationType="slide"
-        transparent={true}
-        visible={generatedQRCode !== null} // Show modal only when QR code is generated
-        onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
+  animationType="slide"
+  transparent={true}
+  visible={generatedQRCode !== null} // Show modal only when QR code is generated
+  onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
+>
+  <View style={styles.centeredView}>
+    <View style={styles.QRModalView}>
+      {/* Display generated QR code */}
+      {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
+      {/* Close Button */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
       >
-        <View style={styles.centeredView}>
-          <View style={styles.QRModalView}>
-            {/* Display generated QR code */}
-            {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
-            >
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        <Text style={styles.closeButtonText}>X</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
 
       <Modal
         animationType="slide"
@@ -480,6 +489,8 @@ const EventDetailScreen = ({ route }) => {
   );
 };
 
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -508,12 +519,13 @@ const styles = StyleSheet.create({
     paddingLeft: 30,
   },
   title: {
-    fontSize: 32,
+    width: 200,
+    fontSize: 40,
     fontWeight: "600",
   },
   description: {
-    width: 150,
-    fontSize: 14,
+    width: 160,
+    fontSize: 18,
   },
   separator: {
     borderBottomWidth: 1,
