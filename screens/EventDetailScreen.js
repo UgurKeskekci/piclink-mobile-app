@@ -22,6 +22,8 @@ import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
+import * as MediaLibrary from 'expo-media-library';
+import { FileSystemAcceptedFormats } from 'expo-file-system';
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
@@ -293,55 +295,42 @@ const EventDetailScreen = ({ route }) => {
       await handlePhotoSelection(selectedPhotos);
     }
   };
+
   const handleDownload = async () => {
     try {
-      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
+      const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
       await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
-
+      console.log('Download directory:', downloadDir);
+      
       // Loop through selectedImages and download each photo
       for (let i = 0; i < selectedImages.length; i++) {
         const photoUrl = selectedImages[i];
-        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
-        const downloadPath = downloadDir + "/" + fileName;
-
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf('/') + 1);
+        const downloadPath = downloadDir + '/' + fileName;
+        console.log('Downloaded file URI:', photoUrl);
+        console.log('Destination directory:', downloadPath);
         // Download the photo
-        await FileSystem.downloadAsync(photoUrl, downloadPath);
-
-        // Save the photo to the device's camera roll
-        if (Platform.OS === "ios") {
-          const cameraDir = FileSystem.documentDirectory + "camera";
-          await FileSystem.makeDirectoryAsync(cameraDir, {
-            intermediates: true,
-          }); // Ensure the camera directory exists
-          await FileSystem.downloadAsync(photoUrl, cameraDir + "/" + fileName);
-        } else if (Platform.OS === "android") {
-          const { status } = await MediaLibrary.requestPermissionsAsync();
-          if (status === "granted") {
-            await MediaLibrary.saveToLibraryAsync(downloadPath);
-          } else {
-            Alert.alert(
-              "Permission Required",
-              "Please grant permission to save photos."
-            );
-            return;
-          }
-        }
-
-        console.log("Downloaded:", fileName);
+        const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
+  
+        // Save the downloaded photo to the device's media library
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        console.log('Downloaded and saved to media library:', asset);
       }
-
+  
       Alert.alert(
-        "Download Complete",
-        "All photos have been downloaded and saved to your device."
+        'Download Complete',
+        "All photos have been downloaded and saved to your device's gallery."
       );
     } catch (error) {
-      console.error("Error downloading photos:", error);
+      console.error('Error downloading photos:', error);
       Alert.alert(
-        "Download Error",
-        "Failed to download photos. Please try again."
+        'Download Error',
+        'Failed to download photos. Please try again.'
       );
     }
   };
+  
+
 
   return (
     <View style={styles.container}>
