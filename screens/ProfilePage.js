@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image, Alert } from "react-native";
+import { StyleSheet, Text, View, Image, Alert, Button, TextInput } from "react-native";
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getAuth } from "firebase/auth";
@@ -58,6 +58,37 @@ const ProfilePage = () => {
     }
   };
 
+  const [changePasswordMode, setChangePasswordMode] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatNewPassword, setRepeatNewPassword] = useState("");
+
+  const handleChangePassword = () => {
+    if (!changePasswordMode) {
+      setChangePasswordMode(true);
+    } else {
+      if (newPassword !== repeatNewPassword) {
+        Alert.alert("Error", "New password and repeat new password do not match.");
+      } else {
+       
+        console.log("New Password:", newPassword);
+        Alert.alert("Success", "Password changed successfully.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setRepeatNewPassword("");
+        setChangePasswordMode(false);
+      }
+    }
+  };
+
+  const handleCancelChangePassword = () => {
+    // Reset fields and exit change password mode
+    setCurrentPassword("");
+    setNewPassword("");
+    setRepeatNewPassword("");
+    setChangePasswordMode(false);
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -70,6 +101,36 @@ const ProfilePage = () => {
     <View style={styles.container}>
       <Icon name="person-add-outline" size={80} color="blue" />
       <Text style={styles.userInfo}>Email: {userEmail}</Text>
+      {!changePasswordMode && (<Button title="Change Password" onPress={handleChangePassword} />)}
+      {changePasswordMode && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Current Password"
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="New Password"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Repeat New Password"
+            value={repeatNewPassword}
+            onChangeText={setRepeatNewPassword}
+            secureTextEntry
+          />
+          <View style={styles.buttonContainer}>
+            <Button title="Save" onPress={handleChangePassword} />
+            <Button title="Cancel" onPress={handleCancelChangePassword} />
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -90,6 +151,20 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    height: 40,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   },
 });
 

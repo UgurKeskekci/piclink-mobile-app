@@ -13,7 +13,7 @@ import {
   Platform,
   Alert, 
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
@@ -22,16 +22,16 @@ import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
+import * as MediaLibrary from 'expo-media-library';
+import { FileSystemAcceptedFormats } from 'expo-file-system';
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-
+  
   // Initialize navigation
   const navigation = useNavigation();
-
-  // State variables
-  const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
+  
   const [selectedImages, setSelectedImages] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [photoDescription, setPhotoDescription] = useState("");
@@ -232,68 +232,73 @@ const EventDetailScreen = ({ route }) => {
       console.error("Error storing photo URLs in Firestore:", error);
     }
   };
-  // Render selected images
-  const renderSelectedImages = () => {
-    return selectedImages.map((imageUri, index) => (
-      <Image
-        key={index}
-        source={{ uri: imageUri }}
-        style={styles.selectedImage}
-      />
-    ));
+  // Pick image from device gallery
+  const pickImage = async () => {
+    let permissionResult =
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (permissionResult.granted === false) {
+    alert("Permission to access camera roll is required!");
+    return;
+  }
+
+  let pickerResult = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+    multiple: true,
+  });
+
+    if (!pickerResult.cancelled) {
+      const selectedPhotos = pickerResult.assets.map((asset) => asset.uri);
+      console.log("Selected Images:", selectedImages);
+      await handlePhotoSelection(selectedPhotos);
+    }
   };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> passwordScreens
   const handleDownload = async () => {
     try {
-      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
+      const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
       await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
-
+      console.log('Download directory:', downloadDir);
+      
       // Loop through selectedImages and download each photo
       for (let i = 0; i < selectedImages.length; i++) {
         const photoUrl = selectedImages[i];
-        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
-        const downloadPath = downloadDir + "/" + fileName;
-
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf('/') + 1);
+        const downloadPath = downloadDir + '/' + fileName;
+        console.log('Downloaded file URI:', photoUrl);
+        console.log('Destination directory:', downloadPath);
         // Download the photo
-        await FileSystem.downloadAsync(photoUrl, downloadPath);
-
-        // Save the photo to the device's camera roll
-        if (Platform.OS === "ios") {
-          const cameraDir = FileSystem.documentDirectory + "camera";
-          await FileSystem.makeDirectoryAsync(cameraDir, {
-            intermediates: true,
-          }); // Ensure the camera directory exists
-          await FileSystem.downloadAsync(photoUrl, cameraDir + "/" + fileName);
-        } else if (Platform.OS === "android") {
-          const { status } = await MediaLibrary.requestPermissionsAsync();
-          if (status === "granted") {
-            await MediaLibrary.saveToLibraryAsync(downloadPath);
-          } else {
-            Alert.alert(
-              "Permission Required",
-              "Please grant permission to save photos."
-            );
-            return;
-          }
-        }
-
-        console.log("Downloaded:", fileName);
+        const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
+  
+        // Save the downloaded photo to the device's media library
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        console.log('Downloaded and saved to media library:', asset);
       }
-
+  
       Alert.alert(
-        "Download Complete",
-        "All photos have been downloaded and saved to your device."
+        'Download Complete',
+        "All photos have been downloaded and saved to your device's gallery."
       );
     } catch (error) {
-      console.error("Error downloading photos:", error);
+      console.error('Error downloading photos:', error);
       Alert.alert(
-        "Download Error",
-        "Failed to download photos. Please try again."
+        'Download Error',
+        'Failed to download photos. Please try again.'
       );
     }
   };
   
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> passwordScreens
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
@@ -384,6 +389,7 @@ const EventDetailScreen = ({ route }) => {
         <View
           style={{
             height: 60,
+            borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.30)",
             display: "flex",
@@ -394,14 +400,14 @@ const EventDetailScreen = ({ route }) => {
         >
           <Icon
             name="apps-outline"
-            size={35}
+            size={40}
             color="black"
             style={{ paddingLeft: 30 }}
           />
-          <Icon name="folder-open-outline" size={35} color="black" />
+          <Icon name="folder-open-outline" size={40} color="black" />
           <Icon
             name="pricetag-outline"
-            size={35}
+            size={40}
             color="black"
             style={{ paddingRight: 30 }}
           />
@@ -411,20 +417,20 @@ const EventDetailScreen = ({ route }) => {
       <View style={styles.separator2}>
         <View
           style={{
-            height: 40,
+            height: 20,
             borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.1)",
             display: "flex",
             flexDirection: "row",
-            justifyContent: "space-between",
+            justifyContent: "center",
             alignItems: "center",
           }}
         >
           <View
             style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
           >
-            <Icon
+            <Icon  
               name="search-outline"
               size={15}
               color="black"
@@ -468,18 +474,12 @@ const EventDetailScreen = ({ route }) => {
 
       {/* GRID LAYOUT FOR PHOTOS */}
       <View style={styles.gridContainer}>
-        {selectedImages.map((imageUri, index) => (
-          <Image
-            key={index}
-            source={{ uri: imageUri }}
-            style={styles.selectedImage}
-          />
-        ))}
+        {renderSelectedImages()}
       </View>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
-        <TouchableOpacity style={styles.navButton} onPress={goToHome}>
+        <TouchableOpacity style={styles.navButton}>
           <Icon name="home" size={30} color="blue" />
           <Text>Home</Text>
         </TouchableOpacity>
@@ -518,6 +518,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     marginLeft: 10,
     marginTop: 10,
+    backgroundColor: "gray",
   },
   eventDesc: {
     flexDirection: "column",
@@ -580,6 +581,7 @@ const styles = StyleSheet.create({
     width: "31%",
     height: 135,
     resizeMode: "cover",
+    borderRadius: 8,
     margin: 4,
     justifyContent: "center",
     alignItems: "center",
@@ -604,91 +606,53 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  triggerButton: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-    backgroundColor: "rgba(36, 96, 253, 0.30)",
-    padding: 8,
-    borderRadius: 20,
-    zIndex: 10, // Make sure the button is above other elements
-    justifyContent: "center",
-    alignItems: "center",
+  // Add these to your StyleSheet object
+triggerButton: {
+  position: 'absolute',
+  right: 10,
+  top: 10,
+  backgroundColor: 'blue', // Feel free to change the color
+  padding: 8,
+  borderRadius: 20,
+  zIndex: 10, // Make sure the button is above other elements
+},
+triggerButtonText: {
+  color: '#fff',
+  fontSize: 20,
+},
+centeredView: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 22
+},
+modalView: {
+  margin: 20,
+  backgroundColor: "white",
+  borderRadius: 20,
+  padding: 35,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: {
+    width: 0,
+    height: 2
   },
-  triggerButtonText: {
-    color: "#fff",
-    fontSize: 20,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    width: 300,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  QRModalView: {
-    margin: 20,
-    width: 350,
-    minHeight: 450,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  invitationModalView: {
-    margin: 20,
-    width: 350,
-    minHeight: 150,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "transparent",
-    padding: 8,
-  },
-  closeButtonText: {
-    color: "blue",
-    fontSize: 24,
-  },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5
+},
+closeButton: {
+  position: 'absolute',
+  top: 10,
+  right: 10,
+  backgroundColor: 'transparent',
+  padding: 8,
+},
+closeButtonText: {
+  color: 'blue',
+  fontSize: 24,
+},
+
 });
 
 export default EventDetailScreen;
