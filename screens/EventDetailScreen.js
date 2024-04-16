@@ -11,7 +11,7 @@ import {
   Switch,
   Image,
   Platform,
-  Alert,
+  Alert, 
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -186,6 +186,25 @@ const EventDetailScreen = ({ route }) => {
       throw error;
     }
   };
+
+  const createQRCode = () => {
+    const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
+    setGeneratedQRCode(qrData);
+    setModalVisible(false);
+  };
+
+  const copyInvitation = () => {
+    const invitationLink = "https://example.com/event";
+    console.log("Invitation link copied:", invitationLink);
+
+    // Attempt to open the URL
+    Linking.openURL(invitationLink).catch((err) => {
+      console.error("An error occurred while trying to open the URL:", err);
+    });
+
+    setCopyLinkModalVisible(true); // You might want to reconsider this modal if you're redirecting right away
+    setModalVisible(false); // Close the "Share" modal
+  };
   
   // Store photo URLs in Firestore
   const storePhotoUrlsInFirestore = async (urls) => {
@@ -222,6 +241,57 @@ const EventDetailScreen = ({ route }) => {
         style={styles.selectedImage}
       />
     ));
+  };
+
+
+  const handleDownload = async () => {
+    try {
+      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
+      await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
+
+      // Loop through selectedImages and download each photo
+      for (let i = 0; i < selectedImages.length; i++) {
+        const photoUrl = selectedImages[i];
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
+        const downloadPath = downloadDir + "/" + fileName;
+
+        // Download the photo
+        await FileSystem.downloadAsync(photoUrl, downloadPath);
+
+        // Save the photo to the device's camera roll
+        if (Platform.OS === "ios") {
+          const cameraDir = FileSystem.documentDirectory + "camera";
+          await FileSystem.makeDirectoryAsync(cameraDir, {
+            intermediates: true,
+          }); // Ensure the camera directory exists
+          await FileSystem.downloadAsync(photoUrl, cameraDir + "/" + fileName);
+        } else if (Platform.OS === "android") {
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status === "granted") {
+            await MediaLibrary.saveToLibraryAsync(downloadPath);
+          } else {
+            Alert.alert(
+              "Permission Required",
+              "Please grant permission to save photos."
+            );
+            return;
+          }
+        }
+
+        console.log("Downloaded:", fileName);
+      }
+
+      Alert.alert(
+        "Download Complete",
+        "All photos have been downloaded and saved to your device."
+      );
+    } catch (error) {
+      console.error("Error downloading photos:", error);
+      Alert.alert(
+        "Download Error",
+        "Failed to download photos. Please try again."
+      );
+    }
   };
   
   return (
