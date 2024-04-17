@@ -11,9 +11,9 @@ import {
   Switch,
   Image,
   Platform,
-  Alert, 
+  Alert,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
@@ -22,20 +22,19 @@ import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
-import * as MediaLibrary from 'expo-media-library';
-import { FileSystemAcceptedFormats } from 'expo-file-system';
+import * as MediaLibrary from "expo-media-library";
+import { FileSystemAcceptedFormats } from "expo-file-system";
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-  
+
   // Initialize navigation
   const navigation = useNavigation();
 
-
-const EventQRCode = ({ eventId }) => {
-  return <QRCode value={eventId.toString()} />;
-};
+  const EventQRCode = ({ eventId }) => {
+    return <QRCode value={eventId.toString()} />;
+  };
 
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
@@ -47,11 +46,9 @@ const EventQRCode = ({ eventId }) => {
   const [isCopyLinkModalVisible, setCopyLinkModalVisible] = useState(false);
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
 
-
   const goToHome = () => {
     navigation.navigate("Welcome");
   };
-
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -104,10 +101,12 @@ const EventQRCode = ({ eventId }) => {
       const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
       const listResult = await storageRef.listAll();
       const photoUrls = [];
-      await Promise.all(listResult.items.map(async (item) => {
-        const downloadURL = await item.getDownloadURL();
-        photoUrls.push(downloadURL);
-      }));
+      await Promise.all(
+        listResult.items.map(async (item) => {
+          const downloadURL = await item.getDownloadURL();
+          photoUrls.push(downloadURL);
+        })
+      );
       return photoUrls;
     } catch (error) {
       console.error("Error fetching existing photo URLs from Storage:", error);
@@ -140,7 +139,7 @@ const EventQRCode = ({ eventId }) => {
   // Pick image from device gallery
   const pickImage = async () => {
     let permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
       alert("Permission to access camera roll is required!");
       return;
@@ -162,10 +161,9 @@ const EventQRCode = ({ eventId }) => {
 
   // Handle photo selection from image picker
   const handlePhotoSelection = async (selectedPhotos) => {
-    console.log("Handling photo selection...");
     try {
       const photoUrls = await uploadPhotosToStorage(selectedPhotos);
-      await storePhotoUrlsInFirestore(photoUrls);
+      await Promise.all(photoUrls.map(storePhotoDetailsInFirestore));
       const updatedImages = [...selectedImages, ...photoUrls];
       setSelectedImages(updatedImages);
     } catch (error) {
@@ -182,7 +180,9 @@ const EventQRCode = ({ eventId }) => {
         const response = await fetch(photoUri);
         const blob = await response.blob();
         // Update storage path to include event ID
-        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
+        const storageRef = storage
+          .ref()
+          .child(`eventPhotos/${eventId}/${imageName}`);
         await storageRef.put(blob);
         const downloadURL = await storageRef.getDownloadURL();
         photoUrls.push(downloadURL);
@@ -200,7 +200,6 @@ const EventQRCode = ({ eventId }) => {
     setModalVisible(false);
   };
 
-  
   const copyInvitation = () => {
     const invitationLink = "https://example.com/event";
     console.log("Invitation link copied:", invitationLink);
@@ -213,7 +212,7 @@ const EventQRCode = ({ eventId }) => {
     setCopyLinkModalVisible(true); // You might want to reconsider this modal if you're redirecting right away
     setModalVisible(false); // Close the "Share" modal
   };
-  
+
   // Store photo URLs in Firestore
   const storePhotoUrlsInFirestore = async (urls) => {
     try {
@@ -241,53 +240,63 @@ const EventQRCode = ({ eventId }) => {
     }
   };
   // Pick image from device gallery
-  
-
 
   const handleDownload = async () => {
     try {
-      const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
+      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
       await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
-      console.log('Download directory:', downloadDir);
-      
+      console.log("Download directory:", downloadDir);
+
       // Loop through selectedImages and download each photo
       for (let i = 0; i < selectedImages.length; i++) {
         const photoUrl = selectedImages[i];
-        const fileName = photoUrl.substring(photoUrl.lastIndexOf('/') + 1);
-        const downloadPath = downloadDir + '/' + fileName;
-        console.log('Downloaded file URI:', photoUrl);
-        console.log('Destination directory:', downloadPath);
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
+        const downloadPath = downloadDir + "/" + fileName;
+        console.log("Downloaded file URI:", photoUrl);
+        console.log("Destination directory:", downloadPath);
         // Download the photo
         const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
-  
+
         // Save the downloaded photo to the device's media library
         const asset = await MediaLibrary.createAssetAsync(uri);
-        console.log('Downloaded and saved to media library:', asset);
+        console.log("Downloaded and saved to media library:", asset);
       }
-  
+
       Alert.alert(
-        'Download Complete',
+        "Download Complete",
         "All photos have been downloaded and saved to your device's gallery."
       );
     } catch (error) {
-      console.error('Error downloading photos:', error);
+      console.error("Error downloading photos:", error);
       Alert.alert(
-        'Download Error',
-        'Failed to download photos. Please try again.'
+        "Download Error",
+        "Failed to download photos. Please try again."
       );
     }
   };
-  
+
   const renderSelectedImages = () => {
     console.log("Rendering selected images...");
     return selectedImages.map((imageUri, index) => (
-      <Image
+      <TouchableOpacity
         key={index}
-        source={{ uri: imageUri }}
-        style={styles.selectedImage}
-      />
+        onPress={() => {
+          navigation.navigate('PhotoDetail', {
+            photoUri: imageUri,
+            photoName: 'Username', 
+            photoDescription: 'Example Description', 
+          });
+        }}
+        style={styles.gridContainer}
+      >
+        <Image
+          source={{ uri: imageUri }}
+          style={styles.selectedImage}
+        />
+      </TouchableOpacity>
     ));
   };
+  
 
   return (
     <View style={styles.container}>
@@ -325,26 +334,25 @@ const EventQRCode = ({ eventId }) => {
 
       {/* Display QR code in a separate pop-up */}
       <Modal
-  animationType="slide"
-  transparent={true}
-  visible={generatedQRCode !== null} // Show modal only when QR code is generated
-  onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
->
-  <View style={styles.centeredView}>
-    <View style={styles.QRModalView}>
-      {/* Display generated QR code */}
-      {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
-      {/* Close Button */}
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
+        animationType="slide"
+        transparent={true}
+        visible={generatedQRCode !== null} // Show modal only when QR code is generated
+        onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
       >
-        <Text style={styles.closeButtonText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
+        <View style={styles.centeredView}>
+          <View style={styles.QRModalView}>
+            {/* Display generated QR code */}
+            {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
+            >
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         animationType="slide"
@@ -421,7 +429,7 @@ const EventQRCode = ({ eventId }) => {
           <View
             style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
           >
-            <Icon  
+            <Icon
               name="search-outline"
               size={15}
               color="black"
@@ -456,7 +464,6 @@ const EventQRCode = ({ eventId }) => {
                 color="black"
                 style={{ paddingRight: 2 }}
               />
-              
             </TouchableOpacity>
             <Text style={{ paddingRight: 10 }}>Download</Text>
           </View>
@@ -464,9 +471,7 @@ const EventQRCode = ({ eventId }) => {
       </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
-      <View style={styles.gridContainer}>
-        {renderSelectedImages()}
-      </View>
+      <View style={styles.gridContainer}>{renderSelectedImages()}</View>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
@@ -488,8 +493,6 @@ const EventQRCode = ({ eventId }) => {
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -533,7 +536,7 @@ const styles = StyleSheet.create({
   },
 
   gridContainer: {
-    width: "100%",
+    width: "",
     marginHorizontal: "auto",
     flexDirection: "row",
     flexWrap: "wrap",
@@ -601,52 +604,51 @@ const styles = StyleSheet.create({
   },
 
   // Add these to your StyleSheet object
-triggerButton: {
-  position: 'absolute',
-  right: 10,
-  top: 10,
-  backgroundColor: 'blue', // Feel free to change the color
-  padding: 8,
-  borderRadius: 20,
-  zIndex: 10, // Make sure the button is above other elements
-},
-triggerButtonText: {
-  color: '#fff',
-  fontSize: 20,
-},
-centeredView: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 22
-},
-modalView: {
-  margin: 20,
-  backgroundColor: "white",
-  borderRadius: 20,
-  padding: 35,
-  alignItems: "center",
-  shadowColor: "#000",
-  shadowOffset: {
-    width: 0,
-    height: 2
+  triggerButton: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    backgroundColor: "blue", // Feel free to change the color
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 10, // Make sure the button is above other elements
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5
-},
-closeButton: {
-  position: 'absolute',
-  top: 10,
-  right: 10,
-  backgroundColor: 'transparent',
-  padding: 8,
-},
-closeButtonText: {
-  color: 'blue',
-  fontSize: 24,
-},
-
+  triggerButtonText: {
+    color: "#fff",
+    fontSize: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "transparent",
+    padding: 8,
+  },
+  closeButtonText: {
+    color: "blue",
+    fontSize: 24,
+  },
 });
 
 export default EventDetailScreen;
