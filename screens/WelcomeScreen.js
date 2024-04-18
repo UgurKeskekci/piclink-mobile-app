@@ -352,14 +352,14 @@ function WelcomeScreen() {
               style={styles.eventPhotoButton}
               onPress={handleImagePicker}
             >
-              {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
-                <Image
-                  source={{ uri: eventProfilePhoto }}
-                  style={{ width: 70, height: 70, borderRadius: 50 }}
-                />
-              ) : (
-                <Icon name="add" size={30} color="blue" />
-              )}
+              {eventProfilePhoto ? (
+          <Image
+            source={{ uri: eventProfilePhoto }}
+            style={{ width: 70, height: 70, borderRadius: 50 }}
+          />
+        ) : (
+          <Icon name="add" size={30} color="blue" />
+        )}
             </TouchableOpacity>
             
           </View>

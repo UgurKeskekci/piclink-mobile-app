@@ -1,18 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image, Alert, Button, TextInput } from "react-native";
+import { StyleSheet, Text, View, Alert, Button, TextInput, TouchableOpacity, Image } from "react-native";
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getAuth } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from 'expo-image-picker';
 
 const ProfilePage = () => {
   const authCtx = useContext(AuthContext);
   const [userEmail, setUserEmail] = useState("");
   const [userProfilePic, setUserProfilePic] = useState(null);
+  const [username, setUsername] = useState("");
+  const [newUsername, setNewUsername] = useState(""); // New state for inputting new username
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user email and UID on component mount
     fetchUserData();
   }, []);
 
@@ -23,6 +25,9 @@ const ProfilePage = () => {
       if (user) {
         // User is signed in
         setUserEmail(user.email);
+        // Fetch username from AsyncStorage
+        const storedUsername = await AsyncStorage.getItem("username");
+        setUsername(storedUsername || "User");
         // Get UID asynchronously
         const uid = await fetchUserUID(user);
         if (uid) {
@@ -70,7 +75,6 @@ const ProfilePage = () => {
       if (newPassword !== repeatNewPassword) {
         Alert.alert("Error", "New password and repeat new password do not match.");
       } else {
-       
         console.log("New Password:", newPassword);
         Alert.alert("Success", "Password changed successfully.");
         setCurrentPassword("");
@@ -81,8 +85,32 @@ const ProfilePage = () => {
     }
   };
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.cancelled) {
+      const uri = result.assets[0].uri;
+      const imageName = uri.substring(uri.lastIndexOf("/") + 1);
+      console.log("Selected image URI:", uri);
+      console.log("Image name:", imageName);
+
+      // Update the userProfilePic state with the selected image URI
+      setUserProfilePic(uri);
+    }
+  };
+
+  const handleSetUsername = () => {
+    setUsername(newUsername);
+    AsyncStorage.setItem("username", newUsername);
+    setNewUsername("");
+    console.log("Username updated successfully:", newUsername);
+  };
+
   const handleCancelChangePassword = () => {
-    // Reset fields and exit change password mode
     setCurrentPassword("");
     setNewPassword("");
     setRepeatNewPassword("");
@@ -99,52 +127,76 @@ const ProfilePage = () => {
 
   return (
     <View style={styles.container}>
-      <Icon name="person-add-outline" size={80} color="blue" />
+      <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
+        {userProfilePic ? (
+          <Image source={{ uri: userProfilePic }} style={styles.profilePicture} />
+        ) : (
+          <Icon name="person-add-outline" size={100} color="blue" />
+        )}
+      </TouchableOpacity>
+      <Text style={styles.username}>Username: {username}</Text>
       <Text style={styles.userInfo}>Email: {userEmail}</Text>
-      {!changePasswordMode && (<Button title="Change Password" onPress={handleChangePassword} />)}
-      {changePasswordMode && (
-        <>
-          <TextInput
-            style={styles.input}
-            placeholder="Current Password"
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            secureTextEntry
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="New Password"
-            value={newPassword}
-            onChangeText={setNewPassword}
-            secureTextEntry
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Repeat New Password"
-            value={repeatNewPassword}
-            onChangeText={setRepeatNewPassword}
-            secureTextEntry
-          />
-          <View style={styles.buttonContainer}>
-            <Button title="Save" onPress={handleChangePassword} />
-            <Button title="Cancel" onPress={handleCancelChangePassword} />
-          </View>
-        </>
-      )}
+      <TextInput
+        style={styles.input}
+        placeholder="New Username"
+        value={newUsername}
+        onChangeText={setNewUsername}
+      />
+      <View style={styles.buttonContainer}>
+        <View style={styles.buttonGroup}>
+          <Button title="Set Username" onPress={handleSetUsername} />
+          <Button title="Change Password" onPress={handleChangePassword} />
+        </View>
+        {changePasswordMode && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Current Password"
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="New Password"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Repeat New Password"
+              value={repeatNewPassword}
+              onChangeText={setRepeatNewPassword}
+              secureTextEntry
+            />
+            <View style={styles.buttonGroup}>
+              <Button title="Save" onPress={handleChangePassword} />
+              <Button title="Cancel" onPress={handleCancelChangePassword} />
+            </View>
+          </>
+        )}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 32,
+  iconContainer: {
+    position: "absolute",
+    top: 16, 
+    left: "50%",
+    transform: [{ translateX: -40 }], 
+    padding: 8,
+    marginBottom: 10, 
   },
   userInfo: {
     fontSize: 18,
-    marginBottom: 20,
+    marginBottom: 5,
+  },
+  username: {
+    fontSize: 18,
+    marginBottom: 5,
   },
   profilePicture: {
     width: 100,
@@ -152,20 +204,33 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginBottom: 20,
   },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
   input: {
     width: "100%",
     height: 40,
-    marginBottom: 20,
+    marginBottom: 10,
     paddingHorizontal: 10,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 5,
   },
   buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  buttonGroup: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    marginTop: 10,
   },
 });
 
 export default ProfilePage;
+
+
