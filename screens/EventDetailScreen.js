@@ -283,16 +283,72 @@ const EventQRCode = ({ eventId }) => {
     }
   };
   
-  const renderSelectedImages = () => {
-    console.log("Rendering selected images...");
-    return selectedImages.map((imageUri, index) => (
-      <Image
-        key={index}
-        source={{ uri: imageUri }}
-        style={styles.selectedImage}
-      />
-    ));
-  };
+ const renderSelectedImages = () => {
+  console.log("Rendering selected images...");
+  const rows = [];
+  const numColumns = 3; // Always display three columns
+  const numRows = Math.ceil(selectedImages.length / numColumns); // Calculate the number of rows needed
+  
+  // Loop through each row
+  for (let i = 0; i < numRows; i++) {
+    const startIndex = i * numColumns;
+    const endIndex = Math.min(startIndex + numColumns, selectedImages.length);
+    const rowImages = selectedImages.slice(startIndex, endIndex);
+    
+    // If it's the first row and there's only one photo, add the photo to the first column and empty views to the other two columns
+    if (i === 0 && selectedImages.length === 1) {
+      rows.push(
+        <View key={i} style={styles.gridContainer}>
+          <TouchableOpacity
+            key={0}
+            onPress={() => {
+              navigation.navigate('PhotoDetail', {
+                photoUri: selectedImages[0],
+                photoName: 'Username', 
+                photoDescription: 'Example Description', 
+              });
+            }}
+            style={styles.gridItem}
+          >
+            <Image
+              source={{ uri: selectedImages[0] }}
+              style={styles.selectedImage}
+            />
+          </TouchableOpacity>
+          <View style={styles.gridItem} />
+          <View style={styles.gridItem} />
+        </View>
+      );
+    } else {
+      // Otherwise, render the row normally
+      rows.push(
+        <View key={i} style={styles.gridContainer}>
+          {rowImages.map((imageUri, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                navigation.navigate('PhotoDetail', {
+                  photoUri: imageUri,
+                  photoName: 'Username', 
+                  photoDescription: 'Example Description', 
+                });
+              }}
+              style={styles.gridItem}
+            >
+              <Image
+                source={{ uri: imageUri }}
+                style={styles.selectedImage}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    }
+  }
+  return rows;
+};
+
+
 
   return (
     <View style={styles.container}>
@@ -457,15 +513,8 @@ const EventQRCode = ({ eventId }) => {
         </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
-      <View style={styles.gridContainer}>
-        {selectedImages.map((imageUri, index) => (
-          <Image
-            key={index}
-            source={{ uri: imageUri }}
-            style={styles.selectedImage}
-          />
-        ))}
-      </View>
+      <View >{renderSelectedImages()}</View>
+
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
@@ -532,10 +581,13 @@ const styles = StyleSheet.create({
   },
 
   gridContainer: {
-    width: "100%",
-    marginHorizontal: "auto",
     flexDirection: "row",
-    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  gridItem: {
+    flex: 1,
+    marginRight: 5,
   },
   item: {
     width: "32%",
@@ -569,13 +621,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedImage: {
-    width: "31%",
-    height: 135,
+    width: "100%",
+    height: 130, // Adjust this height as needed
     resizeMode: "cover",
     borderRadius: 8,
-    margin: 4,
-    justifyContent: "center",
-    alignItems: "center",
   },
   modalContainer: {
     flex: 1,
