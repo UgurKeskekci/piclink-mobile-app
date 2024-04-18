@@ -24,6 +24,11 @@ import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-f
 import { Linking } from "react-native";
 import * as MediaLibrary from 'expo-media-library';
 import { FileSystemAcceptedFormats } from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { Entypo } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
@@ -380,7 +385,6 @@ const EventQRCode = ({ eventId }) => {
         <View
           style={{
             height: 60,
-            borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.30)",
             display: "flex",
@@ -390,15 +394,15 @@ const EventQRCode = ({ eventId }) => {
           }}
         >
           <Icon
-            name="apps-outline"
-            size={40}
+            name="grid-outline"
+            size={35}
             color="black"
             style={{ paddingLeft: 30 }}
           />
-          <Icon name="folder-open-outline" size={40} color="black" />
+          <Icon name="folder-outline" size={35} color="black" />
           <Icon
             name="pricetag-outline"
-            size={40}
+            size={35}
             color="black"
             style={{ paddingRight: 30 }}
           />
@@ -408,81 +412,75 @@ const EventQRCode = ({ eventId }) => {
       <View style={styles.separator2}>
         <View
           style={{
-            height: 20,
+            height: 40,
             borderBottomWidth: 1,
             borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.1)",
             display: "flex",
             flexDirection: "row",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon  
-              name="search-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2, paddingLeft: 10 }}
-            />
-            <Text style={{ paddingRight: 40 }}>Search</Text>
-          </View>
-
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
             <Icon
-              name="funnel-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Sort</Text>
-          </View>
+                name="search-outline"
+                size={15}
+                color="black"
+                style={{ paddingRight: 2, paddingLeft:10 }}
+              />
+             <Text style={{ paddingRight: 40 }}>Search</Text>
+        </View>
+         
 
-          <View
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              justifyContent: "center",
-            }}
-          >
-            <TouchableOpacity onPress={handleDownload}>
-              <Icon
-                name="download-outline"
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+            <Icon
+                name="funnel-outline"
                 size={15}
                 color="black"
                 style={{ paddingRight: 2 }}
               />
-              
-            </TouchableOpacity>
-            <Text style={{ paddingRight: 10 }}>Download</Text>
-          </View>
+              <Text style={{ paddingRight: 20 }}>Sort</Text>
         </View>
-      </View>
+         
+        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+             <Icon
+                 name="download-outline"
+                 size={15}
+                 color="black"
+                 style={{ paddingRight: 2 }}
+               />
+              <Text style={{ paddingRight: 20 }}>Download</Text>
+        </View>
+        
+        </View>
+        </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
       <View style={styles.gridContainer}>
-        {renderSelectedImages()}
+        {selectedImages.map((imageUri, index) => (
+          <Image
+            key={index}
+            source={{ uri: imageUri }}
+            style={styles.selectedImage}
+          />
+        ))}
       </View>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
-          <Icon name="home" size={30} color="blue" />
-          <Text>Home</Text>
+        <Entypo name="home" size={35} color="white" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
           onPress={pickImage}
         >
-          <Icon name="add" size={30} color="white" />
+                    <AntDesign name="pluscircleo" size={55} color="white" />
+
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
-          <Icon name="person" size={30} color="blue" />
-          <Text>Profile</Text>
+          <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>
     </View>
@@ -495,6 +493,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "column",
+    backgroundColor: "white",
   },
   header: {
     flexDirection: "row",
@@ -554,8 +553,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 90,
-    backgroundColor: "rgba(36, 96, 253, 0.10)",
+    height: "8.5%",
+    backgroundColor: "#6b92ed",
   },
   navButton: {
     alignItems: "center",
@@ -563,13 +562,11 @@ const styles = StyleSheet.create({
   circleButton: {
     margin: 0,
     padding: 0,
-    width: 65,
-    height: 65,
-    backgroundColor: "rgba(36, 96, 253, 1)",
+    width: 60,
+    height: 60,
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 90,
   },
   selectedImage: {
     width: "31%",
@@ -600,53 +597,91 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  // Add these to your StyleSheet object
-triggerButton: {
-  position: 'absolute',
-  right: 10,
-  top: 10,
-  backgroundColor: 'blue', // Feel free to change the color
-  padding: 8,
-  borderRadius: 20,
-  zIndex: 10, // Make sure the button is above other elements
-},
-triggerButtonText: {
-  color: '#fff',
-  fontSize: 20,
-},
-centeredView: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  marginTop: 22
-},
-modalView: {
-  margin: 20,
-  backgroundColor: "white",
-  borderRadius: 20,
-  padding: 35,
-  alignItems: "center",
-  shadowColor: "#000",
-  shadowOffset: {
-    width: 0,
-    height: 2
+  triggerButton: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    backgroundColor: 'rgba(36, 96, 253, 0.30)', 
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 10, // Make sure the button is above other elements
+    justifyContent: "center",
+    alignItems: "center",
   },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-  elevation: 5
-},
-closeButton: {
-  position: 'absolute',
-  top: 10,
-  right: 10,
-  backgroundColor: 'transparent',
-  padding: 8,
-},
-closeButtonText: {
-  color: 'blue',
-  fontSize: 24,
-},
-
+  triggerButtonText: {
+    color: '#fff',
+    fontSize: 20,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    width: 300,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  QRModalView: {
+    margin: 20,
+    width: 350,
+    minHeight: 450,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  invitationModalView: {
+    margin: 20,
+    width: 350,
+    minHeight: 150,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'transparent',
+    padding: 8,
+  },
+  closeButtonText: {
+    color: 'blue',
+    fontSize: 24,
+  },
 });
 
 export default EventDetailScreen;

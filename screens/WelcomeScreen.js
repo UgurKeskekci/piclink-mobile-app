@@ -18,6 +18,8 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, storage } from "../config";
+import { Entypo } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 import {
   collection,
   collectionGroup,
@@ -266,7 +268,6 @@ function WelcomeScreen() {
             <TouchableOpacity
               style={[
                 styles.eventItem,
-                { width: events.length > 1 ? "47%" : "70%" },
               ]}
               onPress={() =>
                 navigation.navigate("EventDetail", {
@@ -286,7 +287,7 @@ function WelcomeScreen() {
               <View style={styles.eventBoxImage}>
                 <Image
                   source={{ uri: item.profilePhoto }}
-                  style={{ width: 120, height: 90, borderRadius: 10 }}
+                  style={{ width: '100%', height: '100%', borderRadius: 20 }}
                   
                 />
               </View>
@@ -306,6 +307,7 @@ function WelcomeScreen() {
         visible={isModalVisible}
         onRequestClose={toggleModal}
       >
+        
         <View style={styles.modalContainer}>
           <Text style={styles.createEvent}>Create Event</Text>
           <Text style={styles.inputText}>
@@ -390,18 +392,20 @@ function WelcomeScreen() {
             scrollViewRef.current.scrollTo({ y: 0, animated: true })
           }
         >
-          <Icon name="home" size={30} color="blue" />
-          <Text>Home</Text>
+          <Entypo name="home" size={35} color="white" />
+         {/* <Text>Home</Text> */}
+         
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
           onPress={toggleModal}
         >
-          <Icon name="add" size={30} color="white" />
+          <AntDesign name="pluscircleo" size={55} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
-          <Icon name="person" size={30} color="blue" />
-          <Text>Profile</Text>
+          <Icon name="person" size={35} color="white" />
+          
+          {/* <Text>Profile</Text> */}
         </TouchableOpacity>
       </View>
     </View>
@@ -413,13 +417,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    
+    backgroundColor: "white",
   },
 
   modalContainer: {
     flex: 1,
     justifyContent: "flex-start",
-    backgroundColor: "white",
+    backgroundColor: "#EFECEC",
     padding: 16,
 
   },
@@ -434,36 +438,42 @@ const styles = StyleSheet.create({
   },
 
   eventItem: {
-    width: "100%",
+    width: "43%",
     height: 150,
-    padding: 12,
     borderWidth: 1,
-    borderRadius: 20,
     borderColor: "#cbd7f3",
+    borderRadius: 20,
     marginBottom: 8,
-    margin: 5,
-    backgroundColor: "#cbd7f3",
+    margin: 12,
+    backgroundColor: "rgba(224, 174, 208, 0)",
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
   },
   subheading: {
-    width: "120%",
-    height: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    position: "absolute",
-    left: -2,
-    bottom: -2, // Align the subheading box at the bottom of the parent box
+    position: 'absolute', // Resmin üzerine yerleştirin
+    width: '100%', // Resmin genişliğine eşit olacak şekilde ayarlayın
+    height: 33,
+    bottom: 0, // En altta olacak şekilde pozisyonlandırın
+    backgroundColor: "#cbd7f3",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    paddingHorizontal: 12, // İçeriğe boşluk bırakmak için yanal dolguyu ayarlayın
+    paddingVertical: 8, // İçeriğe boşluk bırakmak için dikey dolguyu ayarlayın
   },
   eventBoxTitle: {
+    
     justifyContent: "center",
     alignItems: "center",
-    top: 10,
-  },
+  }, 
   eventBoxImage: {
+    position: 'relative', // Subheading'in altında olmasını sağlamak için
+    flex: 1, // Resmi genişletmek için flex kullanın
+    width: '100%', // Set width to fill parent container
+    height: '100%', // Set height to fill parent container
     justifyContent: "center",
     alignItems: "center",
-    top: -15,
+    zIndex: -1,
   },
   createEvent: {
     fontSize: 30,
@@ -525,6 +535,8 @@ const styles = StyleSheet.create({
   },
 
   eventPhoto: {},
+
+
   bottomNavBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -533,8 +545,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 90,
-    backgroundColor: "#cbd7f3",
+    height: "8.5%",
+    backgroundColor: "#6b92ed",
   },
   navButton: {
     alignItems: "center",
@@ -542,13 +554,11 @@ const styles = StyleSheet.create({
   circleButton: {
     margin: 0,
     padding: 0,
-    width: 65,
-    height: 65,
-    backgroundColor: "rgba(36, 96, 253, 1)",
+    width: 60,
+    height: 60,
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 90,
   },
   cancelButton: {
     width: "48%",
