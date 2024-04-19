@@ -28,6 +28,7 @@ import {
   getDoc,
   getDocs,
   doc,
+  setDoc,
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
@@ -52,6 +53,7 @@ function WelcomeScreen() {
   const [addEventError, setAddEventError] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const scrollViewRef = useRef(null);
+  const [userEmail, setUserEmail] = useState(null);
 
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
@@ -187,45 +189,7 @@ function WelcomeScreen() {
     }
   };
 
-  const addExistingEvent = async () => {
-    try {
-      const enteredEventId = existingEventInput.trim();
-
-      // Fetch events from all users
-      const eventsQuery = collectionGroup(db, "events");
-      const snapshot = await getDocs(eventsQuery);
-      const allEvents = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        userId: doc.ref.parent.parent.id, // Get the user ID
-        ...doc.data(),
-      }));
-
-      // Search for the event by ID
-      const matchingEvent = allEvents.find(
-        (event) => event.id === enteredEventId
-      );
-
-      if (matchingEvent) {
-        // Add the event to the current user's database
-        const newDocRef = await addDoc(
-          collection(db, `users/${userId}/events`),
-          matchingEvent
-        );
-        console.log("Event added with ID:", newDocRef.id);
-
-        // Update the events state with the newly added event
-        setEvents((prevEvents) => [...prevEvents, matchingEvent]);
-
-        setAddEventError("");
-        toggleExistingEventModal();
-      } else {
-        setAddEventError("Event not found. Please enter a valid event ID.");
-      }
-    } catch (error) {
-      console.error("Error adding existing event:", error);
-      setAddEventError("Error adding existing event. Please try again.");
-    }
-  };
+  
 
   const scrollViewStyle = StyleSheet.compose(
     styles.rootContainer,
@@ -249,10 +213,89 @@ function WelcomeScreen() {
       setEvents(filteredEvents); // Update the events state with filtered events
     }
   };
+
+
+  const addExistingEvent = async () => {
+    try {
+      const enteredEventId = existingEventInput.trim();
+  
+      // Fetch events from all users
+      const eventsQuery = collectionGroup(db, 'events');
+      const snapshot = await getDocs(eventsQuery);
+      const allEvents = snapshot.docs.map(doc => ({
+        id: doc.id,
+        userId: doc.ref.parent.parent.id, // Get the user ID
+        ...doc.data(),
+      }));
+  
+      // Search for the event by ID
+      const matchingEvent = allEvents.find(event => event.id === enteredEventId);
+      if (matchingEvent) {
+        console.log(matchingEvent.id);
+        // Rest of your code...
+      } else {
+        // Handle the case when no matching event is found
+        console.log("No matching event found with ID:", enteredEventId);
+      }
+      if (matchingEvent) {
+        // Add the event to the current user's database with the same ID
+        const newDocRef = await setDoc(doc(collection(db, `users/${userId}/events`), matchingEvent.id), {
+          ...matchingEvent, // Include all properties of the existing event
+          // You can add additional properties here if needed
+        });
+        console.log("Event added with ID:", newDocRef.id);
+      
+        // Update the events state with the newly added event
+        setEvents(prevEvents => [...prevEvents, matchingEvent]);
+      
+        setAddEventError("");
+        toggleExistingEventModal();
+      } else {
+        setAddEventError("Event not found. Please enter a valid event ID.");
+      }      
+    } catch (error) {
+      console.error("Error adding existing event:", error);
+      setAddEventError("Error adding existing event. Please try again.");
+    }
+  };
+  
+  
+
+
   return (
     <View style={scrollViewStyle}>
     <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
-    
+    <Text>User Email: {userEmail}</Text>
+      <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
+        <Text>Add Existing Event</Text>
+      </TouchableOpacity>
+
+      {/* Existing Event Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isExistingEventModalVisible}
+        onRequestClose={toggleExistingEventModal}
+      >
+        <View style={styles.modalContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter event ID "
+            value={existingEventInput}  // Ensure that the value is bound to existingEventInput
+            onChangeText={setExistingEventInput}  // Ensure that onChangeText updates existingEventInput
+          />
+
+
+          <TouchableOpacity onPress={addExistingEvent} style={styles.addButton}>
+            <Text>Add Event</Text>
+          </TouchableOpacity>
+          {addEventError !== "" && <Text style={styles.errorText}>{addEventError}</Text>}
+          <TouchableOpacity onPress={toggleExistingEventModal} style={styles.cancelButton}>
+            <Text>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       <TextInput
         style={styles.inputSearch}
         placeholder="Search events..."
