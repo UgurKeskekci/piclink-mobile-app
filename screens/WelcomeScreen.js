@@ -55,11 +55,15 @@ function WelcomeScreen() {
   const [userEmail, setUserEmail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-
+  const [searchText, setSearchText] = useState("");
+  
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
-  const fetchUserData = async () => {  const [searchText, setSearchText] = useState(""); // Define setSearchText here    try {
+
+  const fetchUserData = async () => {
+     //Define setSearchText here    
+    try {
       const auth = getAuth();
       const user = auth.currentUser;
       console.log(user)
@@ -83,6 +87,13 @@ function WelcomeScreen() {
       Alert.alert("Error", "Failed to fetch user data. Please try again later.");
     }
   };
+  
+  useEffect(() => {
+    // Fetch user email and UID on component mount
+    fetchUserData();
+  }, []);
+  
+    
   useEffect(() => {
     // Fetch user email and UID on component mount
     fetchUserData();
@@ -285,8 +296,8 @@ function WelcomeScreen() {
         toggleExistingEventModal();
       } else {
         setAddEventError("Event not found. Please enter a valid event ID.");
-      }      
-    } catch (error) {
+      } 
+    }catch (error) {
       console.error("Error adding existing event:", error);
       setAddEventError("Error adding existing event. Please try again.");
     }
