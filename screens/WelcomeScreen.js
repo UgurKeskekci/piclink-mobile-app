@@ -11,13 +11,14 @@ import {
   Switch,
   Image,
 } from "react-native";
+import { getAuth} from 'firebase/auth'
 import { AuthContext } from "../store/auth-context";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from "../config";
-import { collection, collectionGroup, addDoc, getDoc, getDocs, doc } from "firebase/firestore";
+import { collection, collectionGroup, addDoc, getDoc, getDocs, doc, setDoc } from "firebase/firestore";
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 
@@ -39,12 +40,66 @@ function WelcomeScreen() {
   const [existingEventInput, setExistingEventInput] = useState("");
   const [addEventError, setAddEventError] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [userEmail, setUserEmail] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
 
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
-
-
+  const fetchUserData = async () => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      console.log(user)
+      console.log(user)
+      console.log(user)
+      if (user) {
+        // User is signed in
+        setUserEmail(user.email);
+        // Get UID asynchronously
+        const uid = await fetchUserUID(user);
+        if (uid) {
+          // Store UID in AsyncStorage
+          await AsyncStorage.setItem("uid", uid);
+        }
+      } else {
+        // No user is signed in
+        console.log("No user is signed in.");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      Alert.alert("Error", "Failed to fetch user data. Please try again later.");
+    }
+  };
+  useEffect(() => {
+    // Fetch user email and UID on component mount
+    fetchUserData();
+  }, []);
+  const fetchUserUID = async (user) => {
+    try {
+      // Simulate fetching UID from some asynchronous source (e.g., Firebase)
+      // Here you would replace this with actual code to fetch the UID
+      return new Promise((resolve) => {
+        // Simulating async operation
+        setTimeout(() => {
+          resolve(user.uid); // Resolve with the user's UID
+        }, 1000); // Simulate 1 second delay
+      });
+    } catch (error) {
+      console.error("Error fetching UID:", error);
+      return null;
+    }
+  };
+  useEffect(() => {
+    // Check if there is a UID
+    if (authCtx.userId) {
+      // Set the UID in state
+      setUserId(authCtx.userId);
+      // Fetch user's email using UID
+      fetchUserEmail(authCtx.userId);
+    }
+  }, [authCtx.userId]);
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -67,12 +122,17 @@ function WelcomeScreen() {
         try {
           const eventsQuery = collection(db, `users/${userId}/events`);
           const snapshot = await getDocs(eventsQuery);
-          const loadedEvents = snapshot.docs.map(doc => ({
-            id: doc.id,
-            eventId: doc.data().eventId, // Include eventId in the event data
-            name: doc.data().name,
-            ...doc.data(),
-          }));
+          console.log("Snapshot:", snapshot.docs); // Log the snapshot to see its structure
+          const loadedEvents = snapshot.docs.map(doc => {
+            console.log("Document data:", doc.data()); // Log each document's data
+            return {
+              id: doc.id,
+              eventId: doc.data().eventId,
+              name: doc.data().name,
+              ...doc.data(),
+            };
+          });
+          console.log("Loaded events:", loadedEvents); // Log the loaded events array
           setEvents(loadedEvents);
         } catch (error) {
           console.error("Error fetching events:", error);
@@ -81,6 +141,7 @@ function WelcomeScreen() {
       fetchEvents();
     }
   }, [userId]);
+  
 
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
@@ -113,10 +174,10 @@ function WelcomeScreen() {
     }
   };
 
-  const addEventDataToFirestore = async () => {
+  const addEventDataToFirestore = async (eventId) => {
     try {
       const docRef = await addDoc(collection(db, `users/${userId}/events`), {
-        eventId: Math.random().toString(36).substring(2), // Generate unique eventId
+        eventId: eventId, // Use the provided eventId parameter
         name: eventName,
         description: eventDescription,
         profilePhoto: eventProfilePhoto,
@@ -126,6 +187,7 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
+  
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -161,7 +223,7 @@ function WelcomeScreen() {
   const addExistingEvent = async () => {
     try {
       const enteredEventId = existingEventInput.trim();
-
+  
       // Fetch events from all users
       const eventsQuery = collectionGroup(db, 'events');
       const snapshot = await getDocs(eventsQuery);
@@ -170,31 +232,44 @@ function WelcomeScreen() {
         userId: doc.ref.parent.parent.id, // Get the user ID
         ...doc.data(),
       }));
-
+  
       // Search for the event by ID
       const matchingEvent = allEvents.find(event => event.id === enteredEventId);
-
       if (matchingEvent) {
-        // Add the event to the current user's database
-        const newDocRef = await addDoc(collection(db, `users/${userId}/events`), matchingEvent);
+        console.log(matchingEvent.id);
+        // Rest of your code...
+      } else {
+        // Handle the case when no matching event is found
+        console.log("No matching event found with ID:", enteredEventId);
+      }
+      if (matchingEvent) {
+        // Add the event to the current user's database with the same ID
+        const newDocRef = await setDoc(doc(collection(db, `users/${userId}/events`), matchingEvent.id), {
+          ...matchingEvent, // Include all properties of the existing event
+          // You can add additional properties here if needed
+        });
         console.log("Event added with ID:", newDocRef.id);
-
+      
         // Update the events state with the newly added event
         setEvents(prevEvents => [...prevEvents, matchingEvent]);
-
+      
         setAddEventError("");
         toggleExistingEventModal();
       } else {
         setAddEventError("Event not found. Please enter a valid event ID.");
-      }
+      }      
     } catch (error) {
       console.error("Error adding existing event:", error);
       setAddEventError("Error adding existing event. Please try again.");
     }
   };
+  
+  
+  
 
   return (
     <View style={styles.rootContainer}>
+      <Text>User Email: {userEmail}</Text>
       <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
         <Text>Add Existing Event</Text>
       </TouchableOpacity>
@@ -225,38 +300,35 @@ function WelcomeScreen() {
         </View>
       </Modal>
       <FlatList
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        renderItem={({ item }) =>
-          item ? (
-            <TouchableOpacity
-              style={styles.eventItem}
-              onPress={() =>
-                navigation.navigate("EventDetail", {
-                  eventId: item.id,
-                  eventName: item.name,
-                  eventDescription: item.description,
-                  eventPhoto: item.profilePhoto,
-                })
-              }
-            >
-              <Text>{item.name}</Text>
-              <Text>{item.description}</Text>
-              <View style={styles.subheading}></View>
-
-              <Image
-                source={{ uri: item.profilePhoto }}
-                style={{ width: 98, height: 50, marginLeft: -12 }}
-              />
-
-
-            </TouchableOpacity>
-          ) : (
-            <View />
-          )
-        }
+  data={events}
+  keyExtractor={(item) => item.id.toString()}
+  numColumns={2}
+  renderItem={({ item }) =>
+  item && item.id ? (
+    <TouchableOpacity
+      style={styles.eventItem}
+      onPress={() =>
+        navigation.navigate("EventDetail", {
+          eventId: item.id,
+          eventName: item.name,
+          eventDescription: item.description,
+          eventPhoto: item.profilePhoto,
+        })
+      }
+    >
+      <Text>{item.name}</Text>
+      <Text>{item.description}</Text>
+      <View style={styles.subheading}></View>
+      <Image
+        source={{ uri: item.profilePhoto }}
+        style={{ width: 98, height: 50, marginLeft: -12 }}
       />
+    </TouchableOpacity>
+  ) : (
+    <View />
+  )
+  }
+/>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
