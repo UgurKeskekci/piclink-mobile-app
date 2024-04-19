@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Entypo } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
+import { Feather } from '@expo/vector-icons';
 
 const ProfilePage = () => {
   const authCtx = useContext(AuthContext);
@@ -152,6 +153,7 @@ const ProfilePage = () => {
     <View style={styles.container}>
       <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
         {userProfilePic ? (
+          
            <View>
             <TouchableOpacity onPress={deleteImage} style={styles.deleteButton}>
              <AntDesign name="closecircleo" size={18} color="black" style={{alignSelf: 'flex-end',}}/>
@@ -161,7 +163,18 @@ const ProfilePage = () => {
          </View>
         ) : (
           
-          <Icon name="person-add-outline" size={80} color="#6b92ed"  style={styles.personIcon} />
+          <View style={styles.profilePhotoContainer}>
+              {/* 
+               <View style={styles.profilePhoto}>
+             <Feather name="upload" size={30} color="black" style={{ marginVertical: 7 }} />
+
+             </View>
+              */}
+            
+             
+            <Icon name="person-add-outline" size={80} color="#6b92ed"  style={styles.personIcon} />
+
+          </View>
         )}
       </TouchableOpacity>
       <View style={styles.textContainer}>
@@ -222,7 +235,6 @@ const ProfilePage = () => {
           style={[styles.navButton, styles.circleButton]}
           onPress={pickImage}
         >
-                    <AntDesign name="pluscircleo" size={55} color="white" />
 
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
@@ -299,10 +311,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     position: "absolute",
+    paddingBottom: 19,
     bottom: 0,
     left: 0,
     right: 0,
-    height: "8.5%",
+    height: "10%",
     backgroundColor: "#6b92ed",
   },
   navButton: {
@@ -314,6 +327,15 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profilePhoto: {
+    width: 90,
+    height: 90,
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
   },

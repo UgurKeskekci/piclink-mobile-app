@@ -607,10 +607,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     position: "absolute",
+    paddingBottom: 19,
     bottom: 0,
     left: 0,
     right: 0,
-    height: "8.5%",
+    height: "10%",
     backgroundColor: "#6b92ed",
   },
   navButton: {
