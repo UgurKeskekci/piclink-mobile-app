@@ -11,9 +11,9 @@ import {
   Switch,
   Image,
   Platform,
-  Alert, 
+  Alert,
 } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
@@ -22,25 +22,24 @@ import { db, storage } from "../config";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
-import * as MediaLibrary from 'expo-media-library';
-import { FileSystemAcceptedFormats } from 'expo-file-system';
-import { Ionicons } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { Entypo } from '@expo/vector-icons';
-import { AntDesign } from '@expo/vector-icons';
+import * as MediaLibrary from "expo-media-library";
+import { FileSystemAcceptedFormats } from "expo-file-system";
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-  
+
   // Initialize navigation
   const navigation = useNavigation();
 
-
-const EventQRCode = ({ eventId }) => {
-  return <QRCode value={eventId.toString()} />;
-};
+  const EventQRCode = ({ eventId }) => {
+    return <QRCode value={eventId.toString()} />;
+  };
 
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
@@ -52,11 +51,9 @@ const EventQRCode = ({ eventId }) => {
   const [isCopyLinkModalVisible, setCopyLinkModalVisible] = useState(false);
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
 
-
   const goToHome = () => {
     navigation.navigate("Welcome");
   };
-
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -87,6 +84,7 @@ const EventQRCode = ({ eventId }) => {
     }
   };
 
+  
   // Fetch existing photos from Firestore
   const fetchExistingPhotosFromFirestore = async () => {
     try {
@@ -109,10 +107,12 @@ const EventQRCode = ({ eventId }) => {
       const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
       const listResult = await storageRef.listAll();
       const photoUrls = [];
-      await Promise.all(listResult.items.map(async (item) => {
-        const downloadURL = await item.getDownloadURL();
-        photoUrls.push(downloadURL);
-      }));
+      await Promise.all(
+        listResult.items.map(async (item) => {
+          const downloadURL = await item.getDownloadURL();
+          photoUrls.push(downloadURL);
+        })
+      );
       return photoUrls;
     } catch (error) {
       console.error("Error fetching existing photo URLs from Storage:", error);
@@ -145,7 +145,7 @@ const EventQRCode = ({ eventId }) => {
   // Pick image from device gallery
   const pickImage = async () => {
     let permissionResult =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissionResult.granted === false) {
       alert("Permission to access camera roll is required!");
       return;
@@ -187,7 +187,9 @@ const EventQRCode = ({ eventId }) => {
         const response = await fetch(photoUri);
         const blob = await response.blob();
         // Update storage path to include event ID
-        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
+        const storageRef = storage
+          .ref()
+          .child(`eventPhotos/${eventId}/${imageName}`);
         await storageRef.put(blob);
         const downloadURL = await storageRef.getDownloadURL();
         photoUrls.push(downloadURL);
@@ -205,7 +207,6 @@ const EventQRCode = ({ eventId }) => {
     setModalVisible(false);
   };
 
-  
   const copyInvitation = () => {
     const invitationLink = "https://example.com/event";
     console.log("Invitation link copied:", invitationLink);
@@ -218,7 +219,7 @@ const EventQRCode = ({ eventId }) => {
     setCopyLinkModalVisible(true); // You might want to reconsider this modal if you're redirecting right away
     setModalVisible(false); // Close the "Share" modal
   };
-  
+
   // Store photo URLs in Firestore
   const storePhotoUrlsInFirestore = async (urls) => {
     try {
@@ -246,109 +247,105 @@ const EventQRCode = ({ eventId }) => {
     }
   };
   // Pick image from device gallery
-  
-
 
   const handleDownload = async () => {
     try {
-      const downloadDir = FileSystem.documentDirectory + 'downloaded_photos'; // Directory to store downloaded photos
+      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
       await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
-      console.log('Download directory:', downloadDir);
-      
+      console.log("Download directory:", downloadDir);
+
       // Loop through selectedImages and download each photo
       for (let i = 0; i < selectedImages.length; i++) {
         const photoUrl = selectedImages[i];
-        const fileName = photoUrl.substring(photoUrl.lastIndexOf('/') + 1);
-        const downloadPath = downloadDir + '/' + fileName;
-        console.log('Downloaded file URI:', photoUrl);
-        console.log('Destination directory:', downloadPath);
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
+        const downloadPath = downloadDir + "/" + fileName;
+        console.log("Downloaded file URI:", photoUrl);
+        console.log("Destination directory:", downloadPath);
         // Download the photo
         const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
-  
+
         // Save the downloaded photo to the device's media library
         const asset = await MediaLibrary.createAssetAsync(uri);
-        console.log('Downloaded and saved to media library:', asset);
+        console.log("Downloaded and saved to media library:", asset);
       }
-  
+
       Alert.alert(
-        'Download Complete',
+        "Download Complete",
         "All photos have been downloaded and saved to your device's gallery."
       );
     } catch (error) {
-      console.error('Error downloading photos:', error);
+      console.error("Error downloading photos:", error);
       Alert.alert(
-        'Download Error',
-        'Failed to download photos. Please try again.'
+        "Download Error",
+        "Failed to download photos. Please try again."
       );
     }
   };
-  
- const renderSelectedImages = () => {
-  console.log("Rendering selected images...");
-  const rows = [];
-  const numColumns = 3; // Always display three columns
-  const numRows = Math.ceil(selectedImages.length / numColumns); // Calculate the number of rows needed
-  
-  // Loop through each row
-  for (let i = 0; i < numRows; i++) {
-    const startIndex = i * numColumns;
-    const endIndex = Math.min(startIndex + numColumns, selectedImages.length);
-    const rowImages = selectedImages.slice(startIndex, endIndex);
-    
-    // If it's the first row and there's only one photo, add the photo to the first column and empty views to the other two columns
-    if (i === 0 && selectedImages.length === 1) {
-      rows.push(
-        <View key={i} style={styles.gridContainer}>
-          <TouchableOpacity
-            key={0}
-            onPress={() => {
-              navigation.navigate('PhotoDetail', {
-                photoUri: selectedImages[0],
-                photoName: 'Username', 
-                photoDescription: 'Example Description', 
-              });
-            }}
-            style={styles.gridItem}
-          >
-            <Image
-              source={{ uri: selectedImages[0] }}
-              style={styles.selectedImage}
-            />
-          </TouchableOpacity>
-          <View style={styles.gridItem} />
-          <View style={styles.gridItem} />
-        </View>
-      );
-    } else {
-      // Otherwise, render the row normally
-      rows.push(
-        <View key={i} style={styles.gridContainer}>
-          {rowImages.map((imageUri, index) => (
+
+  const renderSelectedImages = () => {
+    console.log("Rendering selected images...");
+    const rows = [];
+    const numColumns = 3; // Always display three columns
+    const numRows = Math.ceil(selectedImages.length / numColumns); // Calculate the number of rows needed
+
+    // Loop through each row
+    for (let i = 0; i < numRows; i++) {
+      const startIndex = i * numColumns;
+      const endIndex = Math.min(startIndex + numColumns, selectedImages.length);
+      const rowImages = selectedImages.slice(startIndex, endIndex);
+
+      // If it's the first row and there's only one photo, add the photo to the first column and empty views to the other two columns
+      if (i === 0 && selectedImages.length === 1) {
+        rows.push(
+          <View key={i} style={styles.gridContainer}>
             <TouchableOpacity
-              key={index}
+              key={0}
               onPress={() => {
-                navigation.navigate('PhotoDetail', {
-                  photoUri: imageUri,
-                  photoName: 'Username', 
-                  photoDescription: 'Example Description', 
+                navigation.navigate("PhotoDetail", {
+                  photoUri: selectedImages[0],
+                  photoName: "Username",
+                  photoDescription: "Example Description",
                 });
               }}
               style={styles.gridItem}
             >
               <Image
-                source={{ uri: imageUri }}
+                source={{ uri: selectedImages[0] }}
                 style={styles.selectedImage}
               />
             </TouchableOpacity>
-          ))}
-        </View>
-      );
+            <View style={styles.gridItem} />
+            <View style={styles.gridItem} />
+          </View>
+        );
+      } else {
+        // Otherwise, render the row normally
+        rows.push(
+          <View key={i} style={styles.gridContainer}>
+            {rowImages.map((imageUri, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  navigation.navigate("PhotoDetail", {
+                    photoUri: imageUri,
+                    photoName: "Username",
+                    photoDescription: "Example Description",
+                  });
+                }}
+                style={styles.gridItem}
+              >
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.selectedImage}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        );
+      }
     }
-  }
-  return rows;
-};
-
-
+    return rows;
+  };
 
   return (
     <View style={styles.container}>
@@ -386,26 +383,25 @@ const EventQRCode = ({ eventId }) => {
 
       {/* Display QR code in a separate pop-up */}
       <Modal
-  animationType="slide"
-  transparent={true}
-  visible={generatedQRCode !== null} // Show modal only when QR code is generated
-  onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
->
-  <View style={styles.centeredView}>
-    <View style={styles.QRModalView}>
-      {/* Display generated QR code */}
-      {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
-      {/* Close Button */}
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
+        animationType="slide"
+        transparent={true}
+        visible={generatedQRCode !== null} // Show modal only when QR code is generated
+        onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
       >
-        <Text style={styles.closeButtonText}>X</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
+        <View style={styles.centeredView}>
+          <View style={styles.QRModalView}>
+            {/* Display generated QR code */}
+            {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
+            >
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         animationType="slide"
@@ -478,55 +474,57 @@ const EventQRCode = ({ eventId }) => {
             alignItems: "center",
           }}
         >
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+          <View
+            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+          >
             <Icon
-                name="search-outline"
-                size={15}
-                color="black"
-                style={{ paddingRight: 2, paddingLeft:10 }}
-              />
-             <Text style={{ paddingRight: 40 }}>Search</Text>
-        </View>
-         
+              name="search-outline"
+              size={15}
+              color="black"
+              style={{ paddingRight: 2, paddingLeft: 10 }}
+            />
+            <Text style={{ paddingRight: 40 }}>Search</Text>
+          </View>
 
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
+          <View
+            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+          >
             <Icon
-                name="funnel-outline"
-                size={15}
-                color="black"
-                style={{ paddingRight: 2 }}
-              />
-              <Text style={{ paddingRight: 20 }}>Sort</Text>
+              name="funnel-outline"
+              size={15}
+              color="black"
+              style={{ paddingRight: 2 }}
+            />
+            <Text style={{ paddingRight: 20 }}>Sort</Text>
+          </View>
+
+          <View
+            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+          >
+            <Icon
+              name="download-outline"
+              size={15}
+              color="black"
+              style={{ paddingRight: 2 }}
+            />
+            <Text style={{ paddingRight: 20 }}>Download</Text>
+          </View>
         </View>
-         
-        <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
-             <Icon
-                 name="download-outline"
-                 size={15}
-                 color="black"
-                 style={{ paddingRight: 2 }}
-               />
-              <Text style={{ paddingRight: 20 }}>Download</Text>
-        </View>
-        
-        </View>
-        </View>
+      </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
-      <View >{renderSelectedImages()}</View>
-
+      <View>{renderSelectedImages()}</View>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
-        <Entypo name="home" size={35} color="white" />
+          <Entypo name="home" size={35} color="white" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
           onPress={pickImage}
         >
-                    <AntDesign name="pluscircleo" size={55} color="white" />
-
+          <AntDesign name="pluscircleo" size={55} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
           <Icon name="person" size={35} color="white" />
@@ -535,8 +533,6 @@ const EventQRCode = ({ eventId }) => {
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -647,10 +643,10 @@ const styles = StyleSheet.create({
   },
 
   triggerButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 10,
     top: 10,
-    backgroundColor: 'rgba(36, 96, 253, 0.30)', 
+    backgroundColor: "rgba(36, 96, 253, 0.30)",
     padding: 8,
     borderRadius: 20,
     zIndex: 10, // Make sure the button is above other elements
@@ -658,7 +654,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   triggerButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
   },
   centeredView: {
@@ -678,11 +674,11 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   QRModalView: {
     margin: 20,
@@ -696,11 +692,11 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   invitationModalView: {
     margin: 20,
@@ -714,21 +710,21 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     padding: 8,
   },
   closeButtonText: {
-    color: 'blue',
+    color: "blue",
     fontSize: 24,
   },
 });
