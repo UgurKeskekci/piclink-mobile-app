@@ -12,22 +12,23 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { getAuth} from 'firebase/auth'
+import { getAuth } from "firebase/auth";
 import { AuthContext } from "../store/auth-context";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, storage } from "../config";
-import { Entypo } from '@expo/vector-icons';
-import { AntDesign } from '@expo/vector-icons';
+import { Entypo } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import {
   collection,
   collectionGroup,
   addDoc,
   getDoc,
   getDocs,
-  doc, setDoc,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
@@ -56,19 +57,19 @@ function WelcomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchText, setSearchText] = useState("");
-  
+
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
 
   const fetchUserData = async () => {
-     //Define setSearchText here    
+    //Define setSearchText here
     try {
       const auth = getAuth();
       const user = auth.currentUser;
-      console.log(user)
-      console.log(user)
-      console.log(user)
+      console.log(user);
+      console.log(user);
+      console.log(user);
       if (user) {
         // User is signed in
         setUserEmail(user.email);
@@ -84,16 +85,18 @@ function WelcomeScreen() {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      Alert.alert("Error", "Failed to fetch user data. Please try again later.");
+      Alert.alert(
+        "Error",
+        "Failed to fetch user data. Please try again later."
+      );
     }
   };
-  
+
   useEffect(() => {
     // Fetch user email and UID on component mount
     fetchUserData();
   }, []);
-  
-    
+
   useEffect(() => {
     // Fetch user email and UID on component mount
     fetchUserData();
@@ -145,7 +148,7 @@ function WelcomeScreen() {
           const eventsQuery = collection(db, `users/${userId}/events`);
           const snapshot = await getDocs(eventsQuery);
           console.log("Snapshot:", snapshot.docs); // Log the snapshot to see its structure
-          const loadedEvents = snapshot.docs.map(doc => {
+          const loadedEvents = snapshot.docs.map((doc) => {
             console.log("Document data:", doc.data()); // Log each document's data
             return {
               id: doc.id,
@@ -163,7 +166,6 @@ function WelcomeScreen() {
       fetchEvents();
     }
   }, [userId]);
-  
 
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
@@ -210,7 +212,6 @@ function WelcomeScreen() {
       console.error("Error adding event: ", error);
     }
   };
-  
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -241,7 +242,7 @@ function WelcomeScreen() {
 
   const goToProfile = () => {
     navigation.navigate("Profile");
- };
+  };
 
   // SearchBarRelated
   const fetchEvents = async () => {
@@ -273,7 +274,9 @@ function WelcomeScreen() {
       }));
 
       // Search for the event by ID
-      const matchingEvent = allEvents.find(event => event.id === enteredEventId);
+      const matchingEvent = allEvents.find(
+        (event) => event.id === enteredEventId
+      );
       if (matchingEvent) {
         console.log(matchingEvent.id);
         // Rest of your code...
@@ -283,41 +286,43 @@ function WelcomeScreen() {
       }
       if (matchingEvent) {
         // Add the event to the current user's database with the same ID
-        const newDocRef = await setDoc(doc(collection(db, `users/${userId}/events`), matchingEvent.id), {
-          ...matchingEvent, // Include all properties of the existing event
-          // You can add additional properties here if needed
-        });
+        const newDocRef = await setDoc(
+          doc(collection(db, `users/${userId}/events`), matchingEvent.id),
+          {
+            ...matchingEvent, // Include all properties of the existing event
+            // You can add additional properties here if needed
+          }
+        );
         console.log("Event added with ID:", newDocRef.id);
-      
+
         // Update the events state with the newly added event
-        setEvents(prevEvents => [...prevEvents, matchingEvent]);
-      
+        setEvents((prevEvents) => [...prevEvents, matchingEvent]);
+
         setAddEventError("");
         toggleExistingEventModal();
       } else {
         setAddEventError("Event not found. Please enter a valid event ID.");
-      } 
-    }catch (error) {
+      }
+    } catch (error) {
       console.error("Error adding existing event:", error);
       setAddEventError("Error adding existing event. Please try again.");
     }
   };
 
   const scrollViewStyle = StyleSheet.compose(
-    styles.rootContainer,
+    styles.rootContainer
     // Add any additional styles specific to ScrollView here
   );
 
-
   const handleSearch = (text) => {
     setSearchText(text); // Update the local state with the current search text
-  
+
     if (text.trim() === "") {
       // If the search text is empty, fetch all events
       fetchEvents();
     } else {
       const formattedSearchText = text.toLowerCase();
-  
+
       const filteredEvents = events.filter((event) => {
         const eventName = event.name.toLowerCase();
         return eventName.includes(formattedSearchText);
@@ -327,114 +332,127 @@ function WelcomeScreen() {
   };
   return (
     <View style={scrollViewStyle}>
-          <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
-
       <Text>User Email: {userEmail}</Text>
-      <TouchableOpacity onPress={toggleExistingEventModal} style={styles.addButton}>
+      <TouchableOpacity
+        onPress={toggleExistingEventModal}
+        style={styles.addButton}
+      >
         <Text>Add Existing Event</Text>
       </TouchableOpacity>
-
-      {/* Existing Event Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isExistingEventModalVisible}
-        onRequestClose={toggleExistingEventModal}
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={{ paddingBottom: 90 }}
       >
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter event ID "
-            value={existingEventInput}  // Ensure that the value is bound to existingEventInput
-            onChangeText={setExistingEventInput}  // Ensure that onChangeText updates existingEventInput
-          />
+        <TextInput
+          style={styles.inputSearch}
+          placeholder="Search events..."
+          placeholderTextColor="rgba(0, 0, 0, 0.5)"
+          onChangeText={handleSearch}
+          value={searchText} // Bind the value to searchText state
+        />
 
-<TextInput
-        style={styles.inputSearch}
-        placeholder="Search events..."
-        placeholderTextColor="rgba(0, 0, 0, 0.5)"
-        onChangeText={handleSearch}
-        value={searchText} // Bind the value to searchText state
-      />
+        {/* Existing Event Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isExistingEventModalVisible}
+          onRequestClose={toggleExistingEventModal}
+        >
+          <View style={styles.modalContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter event ID "
+              value={existingEventInput} // Ensure that the value is bound to existingEventInput
+              onChangeText={setExistingEventInput} // Ensure that onChangeText updates existingEventInput
+            />
 
+            <TextInput
+              style={styles.inputSearch}
+              placeholder="Search events..."
+              placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              onChangeText={handleSearch}
+              value={searchText} // Bind the value to searchText state
+            />
 
-          <TouchableOpacity onPress={addExistingEvent} style={styles.addButton}>
-            <Text>Add Event</Text>
-          </TouchableOpacity>
-          {addEventError !== "" && <Text style={styles.errorText}>{addEventError}</Text>}
-          <TouchableOpacity onPress={toggleExistingEventModal} style={styles.cancelButton}>
-            <Text>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        renderItem={({ item }) =>
-          item ? (
             <TouchableOpacity
-              style={[
-                styles.eventItem,
-              ]}
-              onPress={() =>
-                navigation.navigate("EventDetail", {
-                  eventId: item.id,
-                  eventName: item.name,
-                  eventDescription: item.description,
-                  eventPhoto: item.profilePhoto,
-                })
-              }
+              onPress={addExistingEvent}
+              style={styles.addButton}
             >
-              <View style={styles.subheading}>
-                <View style={styles.eventBoxTitle}>
-                  <Text>{item.name}</Text>
-                </View>
-              </View>
-
-              <View style={styles.eventBoxImage}>
-                <Image
-                  source={{ uri: item.profilePhoto }}
-                  style={{ width: '100%', height: '100%', borderRadius: 20 }}
-                  
-                />
-              </View>
+              <Text>Add Event</Text>
             </TouchableOpacity>
-          ) : (
-            <View />
-          )
-        }
-      />
+            {addEventError !== "" && (
+              <Text style={styles.errorText}>{addEventError}</Text>
+            )}
+            <TouchableOpacity
+              onPress={toggleExistingEventModal}
+              style={styles.cancelButton}
+            >
+              <Text>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          renderItem={({ item }) =>
+            item ? (
+              <TouchableOpacity
+                style={[styles.eventItem]}
+                onPress={() =>
+                  navigation.navigate("EventDetail", {
+                    eventId: item.id,
+                    eventName: item.name,
+                    eventDescription: item.description,
+                    eventPhoto: item.profilePhoto,
+                  })
+                }
+              >
+                <View style={styles.subheading}>
+                  <View style={styles.eventBoxTitle}>
+                    <Text>{item.name}</Text>
+                  </View>
+                </View>
 
-     
+                <View style={styles.eventBoxImage}>
+                  <Image
+                    source={{ uri: item.profilePhoto }}
+                    style={{ width: "100%", height: "100%", borderRadius: 20 }}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )
+          }
+        />
 
-      {/* Event Creation Modal ----------------------------------------------------------------------------*/}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={toggleModal}
-      >
-        
-        <View style={styles.modalContainer}>
-          <Text style={styles.createEvent}>Create Event</Text>
-          <Text style={styles.inputText}>
+        {/* Event Creation Modal ----------------------------------------------------------------------------*/}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={toggleModal}
+        >
+          <View style={styles.modalContainer}>
+            <Text style={styles.createEvent}>Create Event</Text>
+            <Text style={styles.inputText}>
               Event Title <Text style={{ color: "red" }}>*</Text>
-          </Text>
+            </Text>
 
-          {eventNameError && (
-            <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
-          )}
-          <TextInput
-            style={[styles.input, eventNameError && styles.inputError]}
-            placeholder="GetTogether, wedding, meeting"
-            placeholderTextColor="rgba(0, 0, 0, 0.5)"
-            onChangeText={(text) => {
-              setEventName(text);
-              setEventNameError(false); // Reset error state when user starts typing
-              setEventNameErrorMessage(""); // Reset error message when user starts typing
-            }}
-          />
+            {eventNameError && (
+              <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
+            )}
+            <TextInput
+              style={[styles.input, eventNameError && styles.inputError]}
+              placeholder="GetTogether, wedding, meeting"
+              placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              onChangeText={(text) => {
+                setEventName(text);
+                setEventNameError(false); // Reset error state when user starts typing
+                setEventNameErrorMessage(""); // Reset error message when user starts typing
+              }}
+            />
 
             <Text style={styles.inputText}>Event Description</Text>
             <TextInput
@@ -456,23 +474,22 @@ function WelcomeScreen() {
               />
             </View>
 
-          <View>
-            <Text style={styles.inputText}>Add Event Profile Photo</Text>
-            <TouchableOpacity
-              style={styles.eventPhotoButton}
-              onPress={handleImagePicker}
-            >
-              {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
-                <Image
-                  source={{ uri: eventProfilePhoto }}
-                  style={{ width: 70, height: 70, borderRadius: 50 }}
-                />
-              ) : (
-                <Icon name="add" size={30} color="blue" />
-              )}
-            </TouchableOpacity>
-            
-          </View>
+            <View>
+              <Text style={styles.inputText}>Add Event Profile Photo</Text>
+              <TouchableOpacity
+                style={styles.eventPhotoButton}
+                onPress={handleImagePicker}
+              >
+                {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
+                  <Image
+                    source={{ uri: eventProfilePhoto }}
+                    style={{ width: 70, height: 70, borderRadius: 50 }}
+                  />
+                ) : (
+                  <Icon name="add" size={30} color="blue" />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
@@ -501,8 +518,7 @@ function WelcomeScreen() {
           }
         >
           <Entypo name="home" size={35} color="white" />
-         {/* <Text>Home</Text> */}
-         
+          {/* <Text>Home</Text> */}
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
@@ -512,7 +528,7 @@ function WelcomeScreen() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
           <Icon name="person" size={35} color="white" />
-          
+
           {/* <Text>Profile</Text> */}
         </TouchableOpacity>
       </View>
@@ -533,7 +549,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     backgroundColor: "#EFECEC",
     padding: 16,
-
   },
   modalButtonsContainer: {
     flexDirection: "row",
@@ -542,7 +557,6 @@ const styles = StyleSheet.create({
     width: "100%",
     position: "absolute",
     bottom: 40,
-    
   },
 
   eventItem: {
@@ -559,8 +573,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   subheading: {
-    position: 'absolute', // Resmin üzerine yerleştirin
-    width: '100%', // Resmin genişliğine eşit olacak şekilde ayarlayın
+    position: "absolute", // Resmin üzerine yerleştirin
+    width: "100%", // Resmin genişliğine eşit olacak şekilde ayarlayın
     height: 33,
     bottom: 0, // En altta olacak şekilde pozisyonlandırın
     backgroundColor: "#cbd7f3",
@@ -570,15 +584,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8, // İçeriğe boşluk bırakmak için dikey dolguyu ayarlayın
   },
   eventBoxTitle: {
-    
     justifyContent: "center",
     alignItems: "center",
-  }, 
+  },
   eventBoxImage: {
-    position: 'relative', // Subheading'in altında olmasını sağlamak için
+    position: "relative", // Subheading'in altında olmasını sağlamak için
     flex: 1, // Resmi genişletmek için flex kullanın
-    width: '100%', // Set width to fill parent container
-    height: '100%', // Set height to fill parent container
+    width: "100%", // Set width to fill parent container
+    height: "100%", // Set height to fill parent container
     justifyContent: "center",
     alignItems: "center",
     zIndex: -1,
@@ -644,7 +657,6 @@ const styles = StyleSheet.create({
 
   eventPhoto: {},
 
-
   bottomNavBar: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -677,7 +689,7 @@ const styles = StyleSheet.create({
     borderColor: "#2460fd",
     justifyContent: "center",
     alignItems: "center",
-    margin:30,
+    margin: 30,
   },
   createButton: {
     width: "48%",
@@ -687,7 +699,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#2460fd",
     justifyContent: "center",
     alignItems: "center",
-    
   },
   buttonTextCancel: {
     color: "black",
