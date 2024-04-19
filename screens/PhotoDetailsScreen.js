@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
 import {
-    collection,
-    addDoc,
-    doc,
-  } from "firebase/firestore";
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
+import { collection, addDoc, doc } from "firebase/firestore";
 import { db } from "../config";
-
+import { getAuth } from "firebase/auth";
 
 const PhotoDetailScreen = ({ route }) => {
   const { photoUri, photoName, photoDescription, eventId } = route.params;
@@ -30,7 +33,10 @@ const PhotoDetailScreen = ({ route }) => {
   useEffect(() => {
     const fetchCommentData = async () => {
       try {
-        const photoDataRef = doc(db, `users/${userId}/events/${eventId}/photoArray`);
+        const photoDataRef = doc(
+          db,
+          `users/${userId}/events/${eventId}/photoArray`
+        );
         const photoDataSnapshot = await getDoc(photoDataRef);
         if (photoDataSnapshot.exists()) {
           const photoData = photoDataSnapshot.data();
@@ -44,7 +50,6 @@ const PhotoDetailScreen = ({ route }) => {
     };
     fetchCommentData();
   }, [userId, eventId]);
-  
 
   const handleComment = () => {
     setShowCommentInput(true);
@@ -59,52 +64,82 @@ const PhotoDetailScreen = ({ route }) => {
       console.error("Error adding likes: ", error);
     }
   };
-  
+
   const handleSubmitComment = async () => {
     try {
-      const updatedComments = [...comments, commentText];
-      await addPhotoDataToFirestore({ comments: updatedComments });
-      setComments(updatedComments);
-      setCommentText(""); // Clear comment input after submitting
+      // Fetch user's email
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        const userEmail = user.email;
+        const commenterName = userEmail.substring(0, 4); // Get first four letters of email
+        const updatedComments = [
+          ...comments,
+          <Text key={comments.length} style={{ fontWeight: "bold" }}>
+            {commenterName}: {commentText}
+          </Text>,
+        ]; // Concatenate commenter's name with comment text
+        await addPhotoDataToFirestore({ comments: updatedComments });
+        setComments(updatedComments);
+        setCommentText(""); // Clear comment input after submitting
+      } else {
+        console.error("No user is signed in.");
+      }
     } catch (error) {
       console.error("Error adding comment: ", error);
     }
   };
-  
 
   const addPhotoDataToFirestore = async (data) => {
     try {
-      await addDoc(collection(db, `users/${userId}/events/${eventId}/photoArray`), data);
+      await addDoc(
+        collection(db, `users/${userId}/events/${eventId}/photoArray`),
+        data
+      );
       console.log("Data added successfully!");
     } catch (error) {
       console.error("Error adding data: ", error);
     }
   };
-  
+
   return (
     <View style={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.photo} />
-      <View style={styles.detailsContainer}>
-        <Text style={styles.name}>{photoName}</Text>
-        <Text style={styles.description}>{photoDescription}</Text>
+      <View style={styles.separator}></View>
 
-        <View style={{ flexDirection: "row", marginBottom: 10 }}>
+      
+      <View style={styles.detailsContainer}>
+
+        <View style={{ flexDirection: "row" }}>
+          <Text style={styles.name}>{photoName}</Text>
+          <Text style={styles.description}> {photoDescription}</Text>
+        </View>
+
+        <View
+          style={{ flexDirection: "row", marginBottom: 10, paddingTop: 10 }}
+        >
           <TouchableOpacity onPress={handleLike}>
             <Icon name="heart-outline" size={30} color="black" />
           </TouchableOpacity>
-          <Text style={{ paddingRight: 40 }}>{likeCount} Likes</Text>
+          <Text style={{ paddingRight: 40, paddingTop: 2 }}>
+            {likeCount} Likes
+          </Text>
           <TouchableOpacity onPress={handleComment}>
             <Icon name="chatbubble-outline" size={27} color="black" />
           </TouchableOpacity>
-          <Text style={{ paddingRight: 40 }}>{comments.length} Comments</Text>
+          <Text style={{ paddingRight: 40, paddingTop: 2 }}>
+            {comments.length} Comments
+          </Text>
         </View>
 
         {/* Render comments */}
-        {comments.slice(0, showAllComments ? comments.length : 2).map((comment, index) => (
-          <Text key={index} style={styles.commentText}>
-            {comment}
-          </Text>
-        ))}
+        {comments
+          .slice(0, showAllComments ? comments.length : 2)
+          .map((comment, index) => (
+            <Text key={index} style={styles.commentText}>
+              {comment}
+            </Text>
+          ))}
 
         {/* Show more comments button */}
         {!showAllComments && comments.length > 2 && (
@@ -137,21 +172,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
   },
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "black",
+  },
   photo: {
-    flex: 0.4,
+    flex: 0.6,
     resizeMode: "cover",
   },
   detailsContainer: {
     flex: 0.6,
-    padding: 20,
+    padding: 10,
   },
   name: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
   },
   description: {
-    fontSize: 18,
+    fontSize: 16,
+    paddingTop:2
   },
   commentContainer: {
     flexDirection: "row",
@@ -160,7 +199,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#ccc",
     borderRadius: 5,
     paddingHorizontal: 10,
