@@ -18,11 +18,10 @@ const ProfilePage = () => {
   const [newUsername, setNewUsername] = useState(""); // New state for inputting new username
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation(); // Get the navigation object
-
   useEffect(() => {
     fetchUserData();
   }, []);
-
+  
   const fetchUserData = async () => {
     try {
       const auth = getAuth();
@@ -32,7 +31,8 @@ const ProfilePage = () => {
         setUserEmail(user.email);
         // Fetch username from AsyncStorage
         const storedUsername = await AsyncStorage.getItem("username");
-        setUsername(storedUsername || "User");
+        // Set username to the first 6 characters of the email address
+        setUsername(user.email.substring(0, 6));
         // Get UID asynchronously
         const uid = await fetchUserUID(user);
         if (uid) {
@@ -51,6 +51,7 @@ const ProfilePage = () => {
       Alert.alert("Error", "Failed to fetch user data. Please try again later.");
     }
   };
+  
 
   const deleteImage = () => {
     setUserProfilePic(null); // Resets the userProfilePic state, effectively removing the image

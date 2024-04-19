@@ -72,7 +72,7 @@ const PhotoDetailScreen = ({ route }) => {
       const user = auth.currentUser;
       if (user) {
         const userEmail = user.email;
-        const commenterName = userEmail.substring(0, 4); // Get first four letters of email
+        const commenterName = userEmail.substring(0, 6); // Get first four letters of email
         const updatedComments = [
           ...comments,
           <Text key={comments.length} style={{ fontWeight: "bold" }}>
