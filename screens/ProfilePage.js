@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { StyleSheet, Text, View, Alert, Button, TextInput, TouchableOpacity, Image } from "react-native";
+import { StyleSheet, Text, View, Alert, Button, TextInput, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getAuth } from "firebase/auth";
@@ -17,6 +17,7 @@ const ProfilePage = () => {
   const [username, setUsername] = useState("");
   const [newUsername, setNewUsername] = useState(""); // New state for inputting new username
   const [isLoading, setIsLoading] = useState(true);
+  const navigation = useNavigation(); // Get the navigation object
 
   useEffect(() => {
     fetchUserData();
@@ -50,10 +51,10 @@ const ProfilePage = () => {
       Alert.alert("Error", "Failed to fetch user data. Please try again later.");
     }
   };
+
   const deleteImage = () => {
     setUserProfilePic(null); // Resets the userProfilePic state, effectively removing the image
   };
-  
 
   const goToHome = () => {
     navigation.navigate("Welcome");
@@ -71,6 +72,7 @@ const ProfilePage = () => {
       },
     });
   };
+  
   const fetchUserUID = async (user) => {
     try {
       // Simulate fetching UID from some asynchronous source (e.g., Firebase)
@@ -144,7 +146,7 @@ const ProfilePage = () => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
@@ -153,44 +155,30 @@ const ProfilePage = () => {
     <View style={styles.container}>
       <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
         {userProfilePic ? (
-          
-           <View>
+          <View>
             <TouchableOpacity onPress={deleteImage} style={styles.deleteButton}>
-             <AntDesign name="closecircleo" size={18} color="black" style={{alignSelf: 'flex-end',}}/>
-           </TouchableOpacity>
-           <Image source={{ uri: userProfilePic }} style={styles.profilePicture} />
-           
-         </View>
+              <AntDesign name="closecircleo" size={18} color="black" style={{alignSelf: 'flex-end',}}/>
+            </TouchableOpacity>
+            <Image source={{ uri: userProfilePic }} style={styles.profilePicture} />
+          </View>
         ) : (
-          
           <View style={styles.profilePhotoContainer}>
-              {/* 
-               <View style={styles.profilePhoto}>
-             <Feather name="upload" size={30} color="black" style={{ marginVertical: 7 }} />
-
-             </View>
-              */}
-            
-             
             <Icon name="person-add-outline" size={80} color="#6b92ed"  style={styles.personIcon} />
-
           </View>
         )}
       </TouchableOpacity>
       <View style={styles.textContainer}>
-      <Text style={styles.username}>Username: {username}</Text>
-      <Text style={styles.userInfo}>Email: {userEmail}</Text>
-     
+        <Text style={styles.username}>Username: {username}</Text>
+        <Text style={styles.userInfo}>Email: {userEmail}</Text>
       </View>
       <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Preferred Username"
-        value={newUsername}
-        onChangeText={setNewUsername}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Preferred Username"
+          value={newUsername}
+          onChangeText={setNewUsername}
+        />
       </View>
-     
       <View style={styles.buttonContainer}>
         <View style={styles.buttonGroup}>
           <Button title="Set Username" onPress={handleSetUsername} />
@@ -226,25 +214,21 @@ const ProfilePage = () => {
           </>
         )}
       </View>
-      
       <View style={styles.bottomNavBar}>
-        <TouchableOpacity style={styles.navButton}>
-        <Entypo name="home" size={35} color="white" />
+        <TouchableOpacity style={styles.navButton} onPress={goToHome}>
+          <Entypo name="home" size={35} color="white" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
           onPress={pickImage}
         >
-
+          {/* Add icon here if needed */}
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
           <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>
     </View>
-
-
-
   );
 };
 

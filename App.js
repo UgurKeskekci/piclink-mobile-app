@@ -113,6 +113,7 @@ function Root() {
 
   return <Navigation />;
 }
+console.disableYellowBox = true;
 
 export default function App() {
   
