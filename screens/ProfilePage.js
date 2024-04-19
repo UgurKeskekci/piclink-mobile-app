@@ -23,20 +23,13 @@ const ProfilePage = () => {
       const auth = getAuth();
       const user = auth.currentUser;
       if (user) {
-        // User is signed in
         setUserEmail(user.email);
-        // Fetch username from AsyncStorage
-        const storedUsername = await AsyncStorage.getItem("username");
-        setUsername(storedUsername || "User");
-        // Get UID asynchronously
         const uid = await fetchUserUID(user);
         if (uid) {
-          // Store UID in AsyncStorage
           await AsyncStorage.setItem("uid", uid);
         }
         setIsLoading(false);
       } else {
-        // No user is signed in
         console.log("No user is signed in.");
         setIsLoading(false);
       }
@@ -49,13 +42,10 @@ const ProfilePage = () => {
 
   const fetchUserUID = async (user) => {
     try {
-      // Simulate fetching UID from some asynchronous source (e.g., Firebase)
-      // Here you would replace this with actual code to fetch the UID
       return new Promise((resolve) => {
-        // Simulating async operation
         setTimeout(() => {
-          resolve(user.uid); // Resolve with the user's UID
-        }, 1000); // Simulate 1 second delay
+          resolve(user.uid);
+        }, 1000);
       });
     } catch (error) {
       console.error("Error fetching UID:", error);
@@ -98,7 +88,7 @@ const ProfilePage = () => {
       console.log("Selected image URI:", uri);
       console.log("Image name:", imageName);
 
-      // Update the userProfilePic state with the selected image URI
+      
       setUserProfilePic(uri);
     }
   };
@@ -136,6 +126,7 @@ const ProfilePage = () => {
       </TouchableOpacity>
       <Text style={styles.username}>Username: {username}</Text>
       <Text style={styles.userInfo}>Email: {userEmail}</Text>
+      
       <TextInput
         style={styles.input}
         placeholder="New Username"

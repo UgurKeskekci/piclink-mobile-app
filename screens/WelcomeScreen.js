@@ -48,12 +48,8 @@ function WelcomeScreen() {
   const [existingEventInput, setExistingEventInput] = useState("");
   const [addEventError, setAddEventError] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [searchText, setSearchText] = useState("");
   const scrollViewRef = useRef(null);
-
-  const toggleExistingEventModal = () => {
-    setExistingEventModalVisible(!isExistingEventModalVisible);
-  };
-  const [searchText, setSearchText] = useState(""); // Define setSearchText here
 
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -168,7 +164,6 @@ function WelcomeScreen() {
     navigation.navigate("Profile");
   };
 
-  // SearchBarRelated
   const fetchEvents = async () => {
     try {
       const eventsQuery = collection(db, `users/${userId}/events`);
@@ -229,16 +224,15 @@ function WelcomeScreen() {
     // Add any additional styles specific to ScrollView here
   );
 
-
   const handleSearch = (text) => {
     setSearchText(text); // Update the local state with the current search text
-  
+
     if (text.trim() === "") {
       // If the search text is empty, fetch all events
       fetchEvents();
     } else {
       const formattedSearchText = text.toLowerCase();
-  
+
       const filteredEvents = events.filter((event) => {
         const eventName = event.name.toLowerCase();
         return eventName.includes(formattedSearchText);
@@ -246,85 +240,85 @@ function WelcomeScreen() {
       setEvents(filteredEvents); // Update the events state with filtered events
     }
   };
+
   return (
     <View style={scrollViewStyle}>
-    <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
-    
-      <TextInput
-        style={styles.inputSearch}
-        placeholder="Search events..."
-        placeholderTextColor="rgba(0, 0, 0, 0.5)"
-        onChangeText={handleSearch}
-        value={searchText} // Bind the value to searchText state
-      />
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        renderItem={({ item }) =>
-          item ? (
-            <TouchableOpacity
-              style={[
-                styles.eventItem,
-                { width: events.length > 1 ? "47%" : "70%" },
-              ]}
-              onPress={() =>
-                navigation.navigate("EventDetail", {
-                  eventId: item.id,
-                  eventName: item.name,
-                  eventDescription: item.description,
-                  eventPhoto: item.profilePhoto,
-                })
-              }
-            >
-              <View style={styles.subheading}>
-                <View style={styles.eventBoxTitle}>
-                  <Text>{item.name}</Text>
-                </View>
-              </View>
-
-              <View style={styles.eventBoxImage}>
-                <Image
-                  source={{ uri: item.profilePhoto }}
-                  style={{ width: 120, height: 90, borderRadius: 10 }}
-                  
-                />
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <View />
-          )
-        }
-      />
-
-     
-
-      {/* Event Creation Modal ----------------------------------------------------------------------------*/}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={toggleModal}
-      >
-        <View style={styles.modalContainer}>
-          <Text style={styles.createEvent}>Create Event</Text>
-          <Text style={styles.inputText}>
-              Event Title <Text style={{ color: "red" }}>*</Text>
-          </Text>
-
-          {eventNameError && (
-            <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
-          )}
+      <ScrollView ref={scrollViewRef} contentContainerStyle={{ paddingBottom: 90 }}>
+        <View style={styles.searchTextContainer}>
+          <Text style={styles.searchText}>Find Events for {authCtx.email}</Text>
           <TextInput
-            style={[styles.input, eventNameError && styles.inputError]}
-            placeholder="GetTogether, wedding, meeting"
+            style={styles.inputSearch}
+            placeholder="Search events..."
             placeholderTextColor="rgba(0, 0, 0, 0.5)"
-            onChangeText={(text) => {
-              setEventName(text);
-              setEventNameError(false); // Reset error state when user starts typing
-              setEventNameErrorMessage(""); // Reset error message when user starts typing
-            }}
+            onChangeText={handleSearch}
+            value={searchText} // Bind the value to searchText state
           />
+        </View>
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          renderItem={({ item }) =>
+            item ? (
+              <TouchableOpacity
+                style={[
+                  styles.eventItem,
+                  { width: events.length > 1 ? "47%" : "70%" },
+                ]}
+                onPress={() =>
+                  navigation.navigate("EventDetail", {
+                    eventId: item.id,
+                    eventName: item.name,
+                    eventDescription: item.description,
+                    eventPhoto: item.profilePhoto,
+                  })
+                }
+              >
+                <View style={styles.subheading}>
+                  <View style={styles.eventBoxTitle}>
+                    <Text>{item.name}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.eventBoxImage}>
+                  <Image
+                    source={{ uri: item.profilePhoto }}
+                    style={{ width: 120, height: 90, borderRadius: 10 }}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )
+          }
+        />
+
+        {/* Event Creation Modal ----------------------------------------------------------------------------*/}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={toggleModal}
+        >
+          <View style={styles.modalContainer}>
+            <Text style={styles.createEvent}>Create Event</Text>
+            <Text style={styles.inputText}>
+              Event Title <Text style={{ color: "red" }}>*</Text>
+            </Text>
+
+            {eventNameError && (
+              <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
+            )}
+            <TextInput
+              style={[styles.input, eventNameError && styles.inputError]}
+              placeholder="GetTogether, wedding, meeting"
+              placeholderTextColor="rgba(0, 0, 0, 0.5)"
+              onChangeText={(text) => {
+                setEventName(text);
+                setEventNameError(false); // Reset error state when user starts typing
+                setEventNameErrorMessage(""); // Reset error message when user starts typing
+              }}
+            />
 
             <Text style={styles.inputText}>Event Description</Text>
             <TextInput
@@ -346,23 +340,22 @@ function WelcomeScreen() {
               />
             </View>
 
-          <View>
-            <Text style={styles.inputText}>Add Event Profile Photo</Text>
-            <TouchableOpacity
-              style={styles.eventPhotoButton}
-              onPress={handleImagePicker}
-            >
-              {eventProfilePhoto ? (
-          <Image
-            source={{ uri: eventProfilePhoto }}
-            style={{ width: 70, height: 70, borderRadius: 50 }}
-          />
-        ) : (
-          <Icon name="add" size={30} color="blue" />
-        )}
-            </TouchableOpacity>
-            
-          </View>
+            <View>
+              <Text style={styles.inputText}>Add Event Profile Photo</Text>
+              <TouchableOpacity
+                style={styles.eventPhotoButton}
+                onPress={handleImagePicker}
+              >
+                {eventProfilePhoto ? (
+                  <Image
+                    source={{ uri: eventProfilePhoto }}
+                    style={{ width: 70, height: 70, borderRadius: 50 }}
+                  />
+                ) : (
+                  <Icon name="add" size={30} color="blue" />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
@@ -413,15 +406,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    
   },
-
   modalContainer: {
     flex: 1,
     justifyContent: "flex-start",
     backgroundColor: "white",
     padding: 16,
-
   },
   modalButtonsContainer: {
     flexDirection: "row",
@@ -430,9 +420,7 @@ const styles = StyleSheet.create({
     width: "100%",
     position: "absolute",
     bottom: 40,
-    
   },
-
   eventItem: {
     width: "100%",
     height: 150,
@@ -453,7 +441,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.5)",
     position: "absolute",
     left: -2,
-    bottom: -2, // Align the subheading box at the bottom of the parent box
+    bottom: -2,
   },
   eventBoxTitle: {
     justifyContent: "center",
@@ -472,10 +460,10 @@ const styles = StyleSheet.create({
     marginTop: 90,
   },
   input: {
-    width: "90%", // Width without units in React Native
-    height: 65, // Height without units in React Native
-    flexGrow: 0, // Use flexGrow property directly
-    marginVertical: 9, // Margin for vertical spacing
+    width: "90%",
+    height: 65,
+    flexGrow: 0,
+    marginVertical: 9,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.1)",
@@ -484,9 +472,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   inputSearch: {
-    height: 60, // Height without units in React Native
-    flexGrow: 0, // Use flexGrow property directly
-    marginVertical: 9, // Margin for vertical spacing
+    height: 60,
+    flexGrow: 0,
+    marginVertical: 9,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.1)",
@@ -495,18 +483,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   inputError: {
-    borderColor: "red", // Change border color to red when there's an error
+    borderColor: "red",
   },
   errorMessage: {
     color: "red",
     fontSize: 12,
-    marginLeft: 10, // Adjust spacing as needed
+    marginLeft: 10,
   },
   inputText: {
     fontSize: 24,
     margin: 15,
   },
-
   onoffInput: {
     marginLeft: 15,
   },
@@ -523,7 +510,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   eventPhoto: {},
   bottomNavBar: {
     flexDirection: "row",
@@ -569,7 +555,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#2460fd",
     justifyContent: "center",
     alignItems: "center",
-    
   },
   buttonTextCancel: {
     color: "black",
@@ -578,6 +563,15 @@ const styles = StyleSheet.create({
   buttonTextCreateEvent: {
     color: "white",
     fontSize: 18,
+  },
+  searchTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  searchText: {
+    fontSize: 18,
+    marginRight: 10,
   },
 });
 
