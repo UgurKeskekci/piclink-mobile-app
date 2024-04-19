@@ -177,27 +177,38 @@ const EventQRCode = ({ eventId }) => {
       console.error("Error handling photo selection:", error);
     }
   };
-
+  const generateRandomId = () => {
+    // Generate a random ID using Math.random() and converting it to base 36
+    return Math.random().toString(36).substring(2);
+  };
   // Upload photos to Firebase Storage
   const uploadPhotosToStorage = async (photos) => {
     try {
-      const photoUrls = [];
+      const photoData = [];
       for (const photoUri of photos) {
         const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
         const response = await fetch(photoUri);
         const blob = await response.blob();
-        // Update storage path to include event ID
         const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
         await storageRef.put(blob);
         const downloadURL = await storageRef.getDownloadURL();
-        photoUrls.push(downloadURL);
+        const photoInfo = {
+          photoId: generateRandomId(),
+          accessUrl: downloadURL,
+          additionDate: new Date().toISOString(), // Current date and time
+          likeNumber: 0, // Initial like count
+          comments: [], // Initial empty array for comments
+          owner: userId
+        };
+        photoData.push(photoInfo);
       }
-      return photoUrls;
+      return photoData;
     } catch (error) {
       console.error("Error uploading photos to Firebase Storage:", error);
       throw error;
     }
   };
+  
 
   const createQRCode = () => {
     const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
@@ -220,21 +231,17 @@ const EventQRCode = ({ eventId }) => {
   };
   
   // Store photo URLs in Firestore
-  const storePhotoUrlsInFirestore = async (urls) => {
+  const storePhotoUrlsInFirestore = async (photoData) => {
     try {
       const eventRef = doc(db, `users/${userId}/events/${eventId}`);
       if (eventRef) {
-        // Get the existing document snapshot
         const eventSnapshot = await getDoc(eventRef);
         if (eventSnapshot.exists()) {
           const eventData = eventSnapshot.data();
-          // Get the existing photos array or initialize as empty array
           const existingPhotos = eventData.photos || [];
-          // Concatenate existing photos with new URLs
-          const updatedPhotos = existingPhotos.concat(urls);
-          // Update the 'photos' field in Firestore document
+          const updatedPhotos = existingPhotos.concat(photoData);
           await updateDoc(eventRef, { photos: updatedPhotos });
-          console.log("Photos uploaded and URLs stored successfully!");
+          console.log("Photos uploaded and data stored successfully!");
         } else {
           console.error("Event document does not exist!");
         }
@@ -242,7 +249,7 @@ const EventQRCode = ({ eventId }) => {
         console.error("Event reference is undefined!");
       }
     } catch (error) {
-      console.error("Error storing photo URLs in Firestore:", error);
+      console.error("Error storing photo data in Firestore:", error);
     }
   };
   // Pick image from device gallery
