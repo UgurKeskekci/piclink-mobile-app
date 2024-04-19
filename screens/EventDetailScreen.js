@@ -425,16 +425,21 @@ const EventQRCode = ({ eventId }) => {
           </View>
         </View>
       </Modal>
-
       <View style={styles.header}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: eventPhoto }} style={styles.image} />
-        </View>
-        <View style={styles.eventDesc}>
-          <Text style={styles.title}>{eventName}</Text>
-          <Text style={styles.description}>{eventDescription}</Text>
-        </View>
-      </View>
+  <View style={styles.imageContainer}>
+    <Image source={{ uri: eventPhoto }} style={styles.image} />
+  </View>
+  <View style={styles.eventDesc}>
+    <Text style={styles.title}>
+      {eventName.length > 18 ? `${eventName.substring(0, 18)}...` : eventName}
+    </Text>
+    <Text style={styles.description}>
+      {eventDescription.length > 50 ? `${eventDescription.substring(0, 50)}...` : eventDescription}
+    </Text>
+  </View>
+</View>
+
+
 
       {/* BUTTONS SECTION UNDER INFO PART */}
       <View style={styles.separator}>
@@ -568,12 +573,12 @@ const styles = StyleSheet.create({
   },
   title: {
     width: 200,
-    fontSize: 40,
+    fontSize: 30,
     fontWeight: "600",
   },
   description: {
     width: 160,
-    fontSize: 18,
+    fontSize: 16,
   },
   separator: {
     borderBottomWidth: 1,

@@ -63,7 +63,11 @@ function AuthenticatedStack() {
           ),
         }}
       />
-      <Stack.Screen name="EventDetail" component={EventDetailScreen} /> 
+      <Stack.Screen
+       name="EventDetail"
+        component={EventDetailScreen}
+                    
+       /> 
       <Stack.Screen name="Profile" component={ProfilePage} />
       <Stack.Screen name="PhotoDetail" component={PhotoDetailScreen} />
 

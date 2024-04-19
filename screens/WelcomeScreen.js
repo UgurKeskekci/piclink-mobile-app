@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, storage } from "../config";
 import { Entypo } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import {
   collection,
   collectionGroup,
@@ -337,7 +338,7 @@ function WelcomeScreen() {
             />
 
             <View style={styles.switchContainer}>
-              <Text style={styles.inputText}>Private Event</Text>
+              <Text style={styles.inputText}>Preferences <Text  style={{  fontSize: 16, fontWeight: '300' }}> (Public or Private)</Text></Text>
               <Switch
                 style={styles.onoffInput}
                 trackColor={{ false: "#767577", true: "#81b0ff" }}
@@ -360,8 +361,14 @@ function WelcomeScreen() {
                   style={{ width: 70, height: 70, borderRadius: 50 }}
                 />
               ) : (
-                <Icon name="add" size={30} color="blue" />
+                
+                <Feather name="upload" size={30} color="black" style={{ marginVertical: 7 }} />
+
+                
               )}
+              <Text style={styles.uploadText}>
+                   <Text style={{ fontWeight: '500' }}>Browse</Text> to Begin Upload
+              </Text>
             </TouchableOpacity>
             
           </View>
@@ -521,8 +528,8 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   eventPhotoButton: {
-    width: 90,
-    height: 90,
+    width: "90%",
+    height: 150,
     flexGrow: 0,
     margin: "8.8px 167px 0 0",
     padding: "30px 7px 18px",
@@ -534,6 +541,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  uploadText: {
+    fontSize: 20,
+    marginVertical: 7,
+    fontWeight: "200",
+  },
   eventPhoto: {},
 
 
