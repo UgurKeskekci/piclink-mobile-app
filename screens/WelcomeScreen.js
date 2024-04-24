@@ -32,6 +32,7 @@ import {
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
+import { getAuth } from 'firebase/auth';
 
 
 function WelcomeScreen() {
@@ -55,6 +56,7 @@ function WelcomeScreen() {
   const [searchResults, setSearchResults] = useState([]);
   const scrollViewRef = useRef(null);
   const [userEmail, setUserEmail] = useState(null);
+  const [username, setUsername] = useState(null);
 
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
@@ -181,18 +183,29 @@ function WelcomeScreen() {
   };
 
   const addEventDataToFirestore = async () => {
+    let eventDocRef;
     try {
-      const docRef = await addDoc(collection(db, `users/${userId}/events`), {
-        eventId: Math.random().toString(36).substring(2), // Generate unique eventId
+      const eventId = Math.random().toString(36).substring(2);
+      eventDocRef = await addDoc(collection(db, `users/${userId}/events`), {
+        eventId: eventId,
         name: eventName,
         description: eventDescription,
         profilePhoto: eventProfilePhoto,
       });
-      console.log("Event added with ID: ", docRef.id);
+      console.log("Event added with ID: ", eventDocRef.id);
+  
+      // Create a subcollection named "photos" for the event
+      // Create a subcollection named "photos" for the event
+const photosCollectionRef = collection(db, `users/${userId}/events/${eventDocRef.id}/photos`);
+const newPhotoDocRef = doc(photosCollectionRef); // Create a new document reference
+await setDoc(newPhotoDocRef, {}); // Create an empty document in the photos subcollection
+
     } catch (error) {
       console.error("Error adding event: ", error);
     }
   };
+  
+  
 
   const createEvent = () => {
     if (!eventName.trim()) {
@@ -264,53 +277,70 @@ function WelcomeScreen() {
   };
 
   const addExistingEvent = async () => {
-    try {
-      const enteredEventId = existingEventInput.trim();
-
-      // Fetch events from all users
-      const eventsQuery = collectionGroup(db, "events");
-      const snapshot = await getDocs(eventsQuery);
-      const allEvents = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        userId: doc.ref.parent.parent.id, // Get the user ID
-        ...doc.data(),
-      }));
-
-      // Search for the event by ID
-      const matchingEvent = allEvents.find(
-        (event) => event.id === enteredEventId
-      );
-      if (matchingEvent) {
-        console.log(matchingEvent.id);
-        // Rest of your code...
-      } else {
-        // Handle the case when no matching event is found
-        console.log("No matching event found with ID:", enteredEventId);
-      }
-      if (matchingEvent) {
-        // Add the event to the current user's database with the same ID
-        const newDocRef = await setDoc(
-          doc(collection(db, `users/${userId}/events`), matchingEvent.id),
-          {
-            ...matchingEvent, // Include all properties of the existing event
-            // You can add additional properties here if needed
-          }
-        );
-        console.log("Event added with ID:", newDocRef.id);
-
-        // Update the events state with the newly added event
-        setEvents((prevEvents) => [...prevEvents, matchingEvent]);
-
-        setAddEventError("");
-        toggleExistingEventModal();
-      } else {
-        setAddEventError("Event not found. Please enter a valid event ID.");
-      }
-    } catch (error) {
-      console.error("Error adding existing event:", error);
-      setAddEventError("Error adding existing event. Please try again.");
-    }
+    const enteredEventId = existingEventInput.trim();
+    
+    // Fetch the existing event
+    const eventsQuery = collectionGroup(db, 'events');
+    const snapshot = await getDocs(eventsQuery);
+    const allEvents = snapshot.docs.map(doc => ({
+      id: doc.id,
+      userId: doc.ref.parent.parent.id, // Get the user ID
+      ...doc.data(),
+    }));
+    
+    // Find the matching event
+    const matchingEvent = allEvents.find(event => event.id === enteredEventId);
+    console.log("Matching Event:", matchingEvent); // Add this log to check the value of matchingEvent
+    if (matchingEvent) {
+      // Add the event to the current user's database with the same ID
+      const newDocRef = await setDoc(doc(collection(db, `users/${userId}/events`), matchingEvent.id), {
+        ...matchingEvent, // Include all properties of the existing event
+        // You can add additional properties here if needed
+      });
+      console.log("Event added with ID:", newDocRef.id);
+  
+      // Fetch the photos subcollection from the existing event
+      const photosQuery = collection(db, `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`);
+      const photosSnapshot = await getDocs(photosQuery);
+  
+      // Copy each document in the photos subcollection to the current user's database
+      const batch = writeBatch(db);
+      photosSnapshot.forEach(doc => {
+        const newDocRef = doc(collection(db, `users/${userId}/events/${matchingEvent.id}/photos`), doc.id);
+        // Include the document data when copying the photo
+        batch.set(newDocRef, doc.data());
+      });
+      await batch.commit();
+  
+      setAddEventError("");
+      toggleExistingEventModal();
+      
+      // Refresh the events list
+      fetchEvents();
+    } else {
+      setAddEventError("Event not found. Please enter a valid event ID.");
+    } 
   };
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+  
+  
+  
 
   return (
     <View style={scrollViewStyle}>
@@ -393,7 +423,7 @@ function WelcomeScreen() {
                     <Text>{item.name}</Text>
                   </View>
                 </View>
-
+                  
                 <View style={styles.eventBoxImage}>
                   <Image
                     source={{ uri: item.profilePhoto }}

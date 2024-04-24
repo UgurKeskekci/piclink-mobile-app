@@ -19,7 +19,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import QRCode from "react-native-qrcode-svg"; // Import QRCode
 import { db, storage } from "../config";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, addDoc, setDoc, getDocs } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
 import * as MediaLibrary from "expo-media-library";
@@ -33,13 +33,13 @@ import { AntDesign } from "@expo/vector-icons";
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-
-  // Initialize navigation
+  console.log(eventId)
+  console.log(eventDescription)
+  const eventIdString = eventId.toString();
+  console.log(eventIdString);
   const navigation = useNavigation();
 
-  const EventQRCode = ({ eventId }) => {
-    return <QRCode value={eventId.toString()} />;
-  };
+
 
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
@@ -50,10 +50,28 @@ const EventDetailScreen = ({ route }) => {
   const [generatedQRCode, setGeneratedQRCode] = useState(null);
   const [isCopyLinkModalVisible, setCopyLinkModalVisible] = useState(false);
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
-
+  const [isEventDataAdded, setIsEventDataAdded] = useState(false);
+  
   const goToHome = () => {
     navigation.navigate("Welcome");
   };
+
+  const fetchPhotos = async () => {
+    try {
+      const photosSnapshot = await getDocs(collection(db, `users/${userId}/events/${eventId}/photos`));
+      if (!photosSnapshot.empty) { // Check if snapshot is not empty
+        const photos = photosSnapshot.docs.map((doc) => doc.data());
+        return photos; // Return the fetched photos
+      } else {
+        return []; // Return an empty array if no photos found
+      }
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+      throw error; // Throw the error to handle it where the function is called
+    }
+  };
+  
+
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -71,63 +89,81 @@ const EventDetailScreen = ({ route }) => {
     fetchAndLogUid();
   }, []);
 
-  // Fetch selected images from Firestore and Firebase Storage
-  const fetchPhotos = async () => {
+
+
+useEffect(() => {
+  // Check if event data has already been added to Firestore
+  if (!isEventDataAdded) {
+    const fetchPhotosFromStorageAndAddToFirestore = async () => {
+      try {
+        // Construct the path to the folder in Firebase Storage using the event ID
+        const storagePath = `eventPhotos/${eventId}`;
+        // Get the list of files (photos) from that folder
+        const storageRef = storage.ref().child(storagePath);
+        const storageFiles = await storageRef.listAll();
+    
+        // Iterate through each file (photo) in the storage
+        const photoDataPromises = storageFiles.items.map(async (fileRef) => {
+          // Get the download URL of the photo
+          const downloadURL = await fileRef.getDownloadURL();
+    
+          // Fetch metadata of the photo from Firestore using its document ID
+          const photoDocRef = doc(db, `users/${userId}/events/${eventId}/photos`, fileRef.name);
+          const photoDocSnapshot = await getDoc(photoDocRef);
+    
+          // Check if the photo document already exists in Firestore
+          if (photoDocSnapshot.exists()) {
+            // If it exists, use the existing data
+            const existingPhotoData = photoDocSnapshot.data();
+            return existingPhotoData;
+          } else {
+            // If it doesn't exist, create new photo data with default values
+            const newPhotoData = {
+              accessUrl: downloadURL,
+              additionDate: new Date().toISOString(),
+              likeNumber: 0,
+              comments: [],
+              owner: userId,
+              photoId: fileRef.name
+            };
+            // Add the new photo data to Firestore
+            await setDoc(photoDocRef, newPhotoData);
+            return newPhotoData;
+          }
+        });
+    
+        // Wait for all photo data promises to resolve
+        const photoDataArray = await Promise.all(photoDataPromises);
+        console.log("Photos fetched and added to Firestore:", photoDataArray);
+        
+        // Set the flag to indicate that event data has been added to Firestore
+        setIsEventDataAdded(true);
+      } catch (error) {
+        console.error("Error fetching photos from Firebase Storage and adding to Firestore:", error);
+      }
+    };
+    
+    // Call the function to fetch photos from Firebase Storage and add them to Firestore
+    fetchPhotosFromStorageAndAddToFirestore();
+  }
+}, [eventId, userId, isEventDataAdded]);
+  
+
+
+
+
+useEffect(() => {
+  const fetchPhotosAndUpdateState = async () => {
     try {
-      const firestorePhotos = await fetchExistingPhotosFromFirestore();
-      const storagePhotos = await fetchExistingPhotoUrlsFromStorage();
-      // Combine and return both sets of photos
-      return [...firestorePhotos, ...storagePhotos];
+      const photos = await fetchPhotos();
+      setGridImages(photos); // Update gridImages state with fetched photos
     } catch (error) {
       console.error("Error fetching photos:", error);
-      return [];
     }
   };
+  fetchPhotosAndUpdateState();
+}, []);
 
-  
-  // Fetch existing photos from Firestore
-  const fetchExistingPhotosFromFirestore = async () => {
-    try {
-      const eventRef = doc(db, `users/${userId}/events/${eventId}`);
-      const eventSnapshot = await getDoc(eventRef);
-      if (eventSnapshot.exists()) {
-        const eventData = eventSnapshot.data();
-        return eventData.photos || [];
-      }
-      return [];
-    } catch (error) {
-      console.error("Error fetching existing photos from Firestore:", error);
-      return [];
-    }
-  };
-
-  // Fetch existing photo URLs from Firebase Storage
-  const fetchExistingPhotoUrlsFromStorage = async () => {
-    try {
-      const storageRef = storage.ref().child(`eventPhotos/${eventId}`);
-      const listResult = await storageRef.listAll();
-      const photoUrls = [];
-      await Promise.all(
-        listResult.items.map(async (item) => {
-          const downloadURL = await item.getDownloadURL();
-          photoUrls.push(downloadURL);
-        })
-      );
-      return photoUrls;
-    } catch (error) {
-      console.error("Error fetching existing photo URLs from Storage:", error);
-      return [];
-    }
-  };
-
-  // Fetch photos when component mounts
-  useEffect(() => {
-    const fetchPhotosAndUpdateState = async () => {
-      const photos = await fetchPhotos();
-      setSelectedImages(photos);
-    };
-    fetchPhotosAndUpdateState();
-  }, []);
 
   // Navigate to profile screen
   const goToProfile = () => {
@@ -167,48 +203,62 @@ const EventDetailScreen = ({ route }) => {
 
   // Handle photo selection from image picker
   const handlePhotoSelection = async (selectedPhotos) => {
-    console.log("Handling photo selection...");
     try {
       const photoUrls = await uploadPhotosToStorage(selectedPhotos);
-      await storePhotoUrlsInFirestore(photoUrls);
-      const updatedImages = [...selectedImages, ...photoUrls];
-      setSelectedImages(updatedImages);
+      await storePhotosInFirestore(photoUrls);
+      // After storing photos, fetch them again to update state
+      fetchPhotos();
     } catch (error) {
       console.error("Error handling photo selection:", error);
     }
   };
+  
 
-  const generateRandomId = () => {
-    // Generate a random ID using Math.random() and converting it to base 36
-    return Math.random().toString(36).substring(2);
-  };
+  
   // Upload photos to Firebase Storage
-  const uploadPhotosToStorage = async (photos) => {
-    try {
-      const photoData = [];
-      for (const photoUri of photos) {
-        const imageName = photoUri.substring(photoUri.lastIndexOf('/') + 1);
-        const response = await fetch(photoUri);
-        const blob = await response.blob();
-        const storageRef = storage.ref().child(`eventPhotos/${eventId}/${imageName}`);
-        await storageRef.put(blob);
-        const downloadURL = await storageRef.getDownloadURL();
-        const photoInfo = {
-          photoId: generateRandomId(),
-          accessUrl: downloadURL,
-          additionDate: new Date().toISOString(), // Current date and time
-          likeNumber: 0, // Initial like count
-          comments: [], // Initial empty array for comments
-          owner: userId
-        };
-        photoData.push(photoInfo);
-      }
-      return photoData;
-    } catch (error) {
-      console.error("Error uploading photos to Firebase Storage:", error);
-      throw error;
+// Upload photos to Firebase Storage
+// Upload photos to Firebase Storage
+const generatePhotoDocumentId = () => {
+  // Generate a unique identifier for each photo document
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+const uploadPhotosToStorage = async (photos) => {
+  try {
+    const photoData = [];
+    for (const photoUri of photos) {
+      const response = await fetch(photoUri);
+      const blob = await response.blob();
+      const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
+      const storagePath = `eventPhotos/${eventId}/${imageName}`;
+      const storageRef = storage.ref().child(storagePath);
+      await storageRef.put(blob);
+      const downloadURL = await storageRef.getDownloadURL();
+      const photoInfo = {
+        accessUrl: downloadURL,
+        additionDate: new Date().toISOString(),
+        likeNumber: 0,
+        comments: [],
+        owner: userId,
+        photoId: imageName
+      };
+      
+      // Use a fixed document ID generated for each photo
+      const photoDocId = generatePhotoDocumentId();
+      const photoDocRef = doc(db, `users/${userId}/events/${eventId}/photos`, photoDocId);
+      await setDoc(photoDocRef, photoInfo);
+
+      photoData.push(photoInfo);
     }
-  };
+    return photoData;
+  } catch (error) {
+    console.error("Error uploading photos to Firebase Storage:", error);
+    throw error;
+  }
+};
+
+
+
 
   const createQRCode = () => {
     const qrData = "Event: " + eventName + "\nDescription: " + eventDescription;
@@ -229,128 +279,53 @@ const EventDetailScreen = ({ route }) => {
     setModalVisible(false); // Close the "Share" modal
   };
 
-  const storePhotoUrlsInFirestore = async (photoData) => {
+  const storePhotosInFirestore = async (photoData) => {
     try {
-      const eventRef = doc(db, `users/${userId}/events/${eventId}`);
-      if (eventRef) {
-        const eventSnapshot = await getDoc(eventRef);
-        if (eventSnapshot.exists()) {
-          const eventData = eventSnapshot.data();
-          const existingPhotos = eventData.photos || [];
-          const updatedPhotos = existingPhotos.concat(photoData);
-          await updateDoc(eventRef, { photos: updatedPhotos });
-          console.log("Photos uploaded and data stored successfully!");
-        } else {
-          console.error("Event document does not exist!");
-        }
-      } else {
-        console.error("Event reference is undefined!");
-      }
+      const photosRef = collection(db, `users/${userId}/events/${eventId}/photos`);
+      await Promise.all(photoData.map(async (photo) => {
+        // Add the photo data to Firestore
+        await addDoc(photosRef, photo);
+      }));
+      console.log("Photos uploaded and data stored successfully!");
     } catch (error) {
       console.error("Error storing photo data in Firestore:", error);
     }
   };
   
+  
 
-  const handleDownload = async () => {
-    try {
-      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
-      await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
-      console.log("Download directory:", downloadDir);
 
-      // Loop through selectedImages and download each photo
-      for (let i = 0; i < selectedImages.length; i++) {
-        const photoUrl = selectedImages[i];
-        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
-        const downloadPath = downloadDir + "/" + fileName;
-        console.log("Downloaded file URI:", photoUrl);
-        console.log("Destination directory:", downloadPath);
-        // Download the photo
-        const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
-
-        // Save the downloaded photo to the device's media library
-        const asset = await MediaLibrary.createAssetAsync(uri);
-        console.log("Downloaded and saved to media library:", asset);
-      }
-
-      Alert.alert(
-        "Download Complete",
-        "All photos have been downloaded and saved to your device's gallery."
-      );
-    } catch (error) {
-      console.error("Error downloading photos:", error);
-      Alert.alert(
-        "Download Error",
-        "Failed to download photos. Please try again."
-      );
-    }
-  };
 
   const renderSelectedImages = () => {
-    console.log("Rendering selected images...");
-    const rows = [];
-    const numColumns = 3; // Always display three columns
-    const numRows = Math.ceil(selectedImages.length / numColumns); // Calculate the number of rows needed
-
-    // Loop through each row
-    for (let i = 0; i < numRows; i++) {
-      const startIndex = i * numColumns;
-      const endIndex = Math.min(startIndex + numColumns, selectedImages.length);
-      const rowImages = selectedImages.slice(startIndex, endIndex);
-
-      // If it's the first row and there's only one photo, add the photo to the first column and empty views to the other two columns
-      if (i === 0 && selectedImages.length === 1) {
-        rows.push(
-          <View key={i} style={styles.gridContainer}>
-            <TouchableOpacity
-              key={0}
-              onPress={() => {
-                navigation.navigate("PhotoDetail", {
-                  photoUri: selectedImages[0],
-                  photoName: "Username",
-                  photoDescription: "Example Description",
-                });
-              }}
-              style={styles.gridItem}
-            >
-              <Image
-                source={{ uri: selectedImages[0] }}
-                style={styles.selectedImage}
-              />
-            </TouchableOpacity>
-            <View style={styles.gridItem} />
-            <View style={styles.gridItem} />
-          </View>
-        );
-      } else {
-        // Otherwise, render the row normally
-        rows.push(
-          <View key={i} style={styles.gridContainer}>
-            {rowImages.map((imageUri, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  navigation.navigate("PhotoDetail", {
-                    photoUri: imageUri,
-                    photoName: "Username",
-                    photoDescription: "Example Description",
-                  });
-                }}
-                style={styles.gridItem}
-              >
-                <Image
-                  source={{ uri: imageUri }}
-                  style={styles.selectedImage}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        );
-      }
-    }
-    return rows;
+    return (
+      <View style={styles.gridContainer}>
+        {gridImages.map((imageData, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => {
+              navigation.navigate("PhotoDetail", {
+                photoUri: imageData.accessUrl,
+                photoName: "Username", // You might want to replace this with the actual photo name
+                photoDescription: "Example Description", // You might want to replace this with the actual photo description
+                eventId: eventId,
+                userId: userId,
+                photoId: imageData.photoId// Pass the photo ID here
+              });
+            }}
+            style={styles.gridItem}
+          >
+            <Image
+              source={{ uri: imageData.accessUrl }}
+              style={styles.selectedImage}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
-
+  
+  
+  
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
