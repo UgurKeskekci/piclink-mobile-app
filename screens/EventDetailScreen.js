@@ -52,8 +52,9 @@ const EventDetailScreen = ({ route }) => {
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
 
   const goToHome = () => {
-    navigation.navigate("Welcome");
+    navigation.navigate('Welcome');
   };
+  
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -527,7 +528,7 @@ const EventDetailScreen = ({ route }) => {
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
-          <Entypo name="home" size={35} color="white" />
+          <Entypo name="home" size={35} color="white"gonPress={goToHome} />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}

@@ -32,6 +32,7 @@ import {
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
+import QRScanner from './QRScanner'; 
 
 
 function WelcomeScreen() {
@@ -312,6 +313,10 @@ function WelcomeScreen() {
     }
   };
 
+  const handleQRScanned = (data) => {
+    setExistingEventInput(data); // Update existingEventInput with the scanned data
+  };
+
   return (
     <View style={scrollViewStyle}>
       <ScrollView
@@ -331,10 +336,10 @@ function WelcomeScreen() {
           style={styles.addButton}
         >
         <Icon name="add-outline" size={30} color="#6b92ed"  />
-        
+       
 
         </TouchableOpacity>
-
+       
         {/* Existing Event Modal */}
         <Modal
           animationType="slide"
@@ -343,6 +348,7 @@ function WelcomeScreen() {
           onRequestClose={toggleExistingEventModal}
         >
           <View style={styles.addEventModal}>
+          <QRScanner onQRScanned={handleQRScanned} /> 
             <TextInput
               style={styles.input}
               placeholder="Enter event ID "
