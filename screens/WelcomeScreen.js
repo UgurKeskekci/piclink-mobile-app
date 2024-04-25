@@ -231,6 +231,7 @@ await setDoc(newPhotoDocRef, {}); // Create an empty document in the photos subc
     setSelectedPhotos([]);
     setSelectedPhotoIndex(null);
     setEventProfilePhoto(null);
+    fetchEvents();
     toggleModal();
   };
 

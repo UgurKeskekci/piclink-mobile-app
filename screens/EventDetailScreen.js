@@ -51,7 +51,8 @@ const EventDetailScreen = ({ route }) => {
   const [isCopyLinkModalVisible, setCopyLinkModalVisible] = useState(false);
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
   const [isEventDataAdded, setIsEventDataAdded] = useState(false);
-  
+  const [newPhotoCheck, setNewPhotoCheck] = useState(null);
+
   const goToHome = () => {
     navigation.navigate("Welcome");
   };
@@ -162,7 +163,7 @@ useEffect(() => {
     }
   };
   fetchPhotosAndUpdateState();
-}, []);
+}, [newPhotoCheck]);
 
 
   // Navigate to profile screen
@@ -206,6 +207,7 @@ useEffect(() => {
     try {
       const photoUrls = await uploadPhotosToStorage(selectedPhotos);
       await storePhotosInFirestore(photoUrls);
+      setNewPhotoCheck(true)
       // After storing photos, fetch them again to update state
       fetchPhotos();
     } catch (error) {
