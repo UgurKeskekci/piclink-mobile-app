@@ -7,109 +7,91 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
+import { db } from "../config"; // Import your Firebase Firestore configuration
 import Icon from "react-native-vector-icons/Ionicons";
-import { collection, addDoc, doc } from "firebase/firestore";
-import { db } from "../config";
-import { getAuth } from "firebase/auth";
 
 const PhotoDetailScreen = ({ route }) => {
-  const { photoUri, photoName, photoDescription, eventId } = route.params;
-  const [userId, setUserId] = useState(null);
-
-  const [likeCount, setLikeCount] = useState(0);
+  // Destructure necessary data from route params
+  const { photoUri, photoName, photoDescription, eventId, userId, photoId } =
+    route.params;
+  console.log(photoId);
+  // State variables for comment input and comments list
+  const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState([]);
-  const [showCommentInput, setShowCommentInput] = useState(false);
-  const [commentText, setCommentText] = useState("");
+  const [likeNumber, setLikeNumber] = useState(0);
   const [showAllComments, setShowAllComments] = useState(false);
+  const [showCommentInput, setShowCommentInput] = useState(false);
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      // Fetch user ID from AsyncStorage or wherever you store it
-      // and update the state
-    };
-    fetchUserId();
-  }, []);
+  // Function to handle adding a comment
+  const addComment = async () => {
+    try {
+      if (commentInput.trim() !== "") {
+        // Construct comment object
+        const newComment = {
+          text: commentInput,
+          userId: userId,
+          timestamp: new Date().toISOString(),
+        };
 
+        // Add the new comment to the existing comments array in Firestore
+        await db
+          .doc(`users/${userId}/events/${eventId}/photos/${photoId}`)
+          .update({
+            comments: [...comments, newComment],
+          });
+
+        // Update the comments list in the state
+        setComments((prevComments) => [...prevComments, newComment]);
+
+        // Clear comment input
+        setCommentInput("");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  // Function to handle liking a photo
+  const likePhoto = async () => {
+    try {
+      const photoDocRef = db.doc(
+        `users/${userId}/events/${eventId}/photos/${photoId}`
+      );
+      await photoDocRef.update({
+        likeNumber: likeNumber + 1,
+      });
+      setLikeNumber(likeNumber + 1);
+    } catch (error) {
+      console.error("Error liking photo:", error);
+    }
+  };
+
+  // Fetch initial comments and like count
   useEffect(() => {
-    const fetchCommentData = async () => {
+    const fetchPhotoData = async () => {
       try {
-        const photoDataRef = doc(
-          db,
-          `users/${userId}/events/${eventId}/photoArray`
+        const photoDocRef = db.doc(
+          `users/${userId}/events/${eventId}/photos/${photoId}`
         );
-        const photoDataSnapshot = await getDoc(photoDataRef);
-        if (photoDataSnapshot.exists()) {
-          const photoData = photoDataSnapshot.data();
+        const photoDocSnapshot = await photoDocRef.get();
+        if (photoDocSnapshot.exists) {
+          const photoData = photoDocSnapshot.data();
           setComments(photoData.comments || []);
-        } else {
-          console.error("Photo data document does not exist!");
+          setLikeNumber(photoData.likeNumber || 0);
         }
       } catch (error) {
         console.error("Error fetching photo data:", error);
       }
     };
-    fetchCommentData();
-  }, [userId, eventId]);
-
-  const handleComment = () => {
-    setShowCommentInput(true);
-  };
-
-  const handleLike = async () => {
-    try {
-      const newLikeCount = likeCount + 1;
-      await addPhotoDataToFirestore({ likeCount: newLikeCount });
-      setLikeCount(newLikeCount);
-    } catch (error) {
-      console.error("Error adding likes: ", error);
-    }
-  };
-
-  const handleSubmitComment = async () => {
-    try {
-      // Fetch user's email
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user) {
-        const userEmail = user.email;
-        const commenterName = userEmail.substring(0, 6); // Get first four letters of email
-        const updatedComments = [
-          ...comments,
-          <Text key={comments.length} style={{ fontWeight: "bold" }}>
-            {commenterName}: {commentText}
-          </Text>,
-        ]; // Concatenate commenter's name with comment text
-        await addPhotoDataToFirestore({ comments: updatedComments });
-        setComments(updatedComments);
-        setCommentText(""); // Clear comment input after submitting
-      } else {
-        console.error("No user is signed in.");
-      }
-    } catch (error) {
-      console.error("Error adding comment: ", error);
-    }
-  };
-
-  const addPhotoDataToFirestore = async (data) => {
-    try {
-      await addDoc(
-        collection(db, `users/${userId}/events/${eventId}/photoArray`),
-        data
-      );
-      console.log("Data added successfully!");
-    } catch (error) {
-      console.error("Error adding data: ", error);
-    }
-  };
+    fetchPhotoData();
+  }, []);
 
   return (
     <View style={styles.container}>
       <Image source={{ uri: photoUri }} style={styles.photo} />
       <View style={styles.separator}></View>
 
-      
       <View style={styles.detailsContainer}>
-
         <View style={{ flexDirection: "row" }}>
           <Text style={styles.name}>{photoName}</Text>
           <Text style={styles.description}> {photoDescription}</Text>
@@ -118,15 +100,18 @@ const PhotoDetailScreen = ({ route }) => {
         <View
           style={{ flexDirection: "row", marginBottom: 10, paddingTop: 10 }}
         >
-          <TouchableOpacity onPress={handleLike}>
+          <TouchableOpacity onPress={likePhoto}>
             <Icon name="heart-outline" size={30} color="black" />
           </TouchableOpacity>
           <Text style={{ paddingRight: 40, paddingTop: 2 }}>
-            {likeCount} Likes
+            {likeNumber} Likes
           </Text>
-          <TouchableOpacity onPress={handleComment}>
+          <TouchableOpacity
+            onPress={() => setShowCommentInput(!showCommentInput)}
+          >
             <Icon name="chatbubble-outline" size={27} color="black" />
           </TouchableOpacity>
+
           <Text style={{ paddingRight: 40, paddingTop: 2 }}>
             {comments.length} Comments
           </Text>
@@ -134,12 +119,13 @@ const PhotoDetailScreen = ({ route }) => {
 
         {/* Render comments */}
         {comments
-          .slice(0, showAllComments ? comments.length : 2)
-          .map((comment, index) => (
-            <Text key={index} style={styles.commentText}>
-              {comment}
-            </Text>
-          ))}
+  .slice(0, showAllComments ? comments.length : 2)
+  .map((comment, index) => (
+    <Text key={index} style={styles.commentText}>
+      {comment.text} {/* Render the comment text */}
+    </Text>
+  ))}
+
 
         {/* Show more comments button */}
         {!showAllComments && comments.length > 2 && (
@@ -154,10 +140,11 @@ const PhotoDetailScreen = ({ route }) => {
             <TextInput
               style={styles.commentInput}
               placeholder="Write a comment..."
-              onChangeText={(text) => setCommentText(text)}
-              value={commentText}
+              onChangeText={setCommentInput}
+              value={commentInput}
+              onSubmitEditing={addComment}
             />
-            <TouchableOpacity onPress={handleSubmitComment}>
+            <TouchableOpacity onPress={addComment}>
               <Text style={styles.submitButton}>Send</Text>
             </TouchableOpacity>
           </View>
@@ -190,7 +177,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    paddingTop:2
+    paddingTop: 2,
   },
   commentContainer: {
     flexDirection: "row",
