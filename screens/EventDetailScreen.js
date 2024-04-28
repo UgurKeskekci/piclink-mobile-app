@@ -30,6 +30,8 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 
+
+
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
@@ -60,18 +62,51 @@ const EventDetailScreen = ({ route }) => {
 
   const fetchPhotos = async () => {
     try {
-      const photosSnapshot = await getDocs(collection(db, `users/${userId}/events/${eventId}/photos`));
-      if (!photosSnapshot.empty) { // Check if snapshot is not empty
-        const photos = photosSnapshot.docs.map((doc) => doc.data());
-        return photos; // Return the fetched photos
+      // Check if photos are available in local cache
+      const cachedPhotos = await AsyncStorage.getItem(`eventPhotos_${eventId}`);
+      if (cachedPhotos) {
+        // Parse cached data
+        const photos = JSON.parse(cachedPhotos);
+        return photos;
       } else {
-        return []; // Return an empty array if no photos found
+        // Fetch photos from Firebase
+        const photosSnapshot = await getDocs(collection(db, `users/${userId}/events/${eventId}/photos`));
+        if (!photosSnapshot.empty) {
+          const photos = photosSnapshot.docs.map((doc) => doc.data());
+          // Store fetched photos in cache
+          await AsyncStorage.setItem(`eventPhotos_${eventId}`, JSON.stringify(photos));
+          return photos;
+        } else {
+          return [];
+        }
       }
     } catch (error) {
       console.error("Error fetching photos:", error);
-      throw error; // Throw the error to handle it where the function is called
+      throw error;
     }
   };
+
+  const storePhotosInCache = async (photos) => {
+    try {
+      await AsyncStorage.setItem(`eventPhotos_${eventId}`, JSON.stringify(photos));
+    } catch (error) {
+      console.error("Error storing photos in cache:", error);
+    }
+  };
+  
+  // Fetch and update photos with caching
+  useEffect(() => {
+    const fetchPhotosAndUpdateState = async () => {
+      try {
+        const photos = await fetchPhotos();
+        setGridImages(photos); // Update gridImages state with fetched photos
+        storePhotosInCache(photos); // Store fetched photos in cache
+      } catch (error) {
+        console.error("Error fetching photos:", error);
+      }
+    };
+    fetchPhotosAndUpdateState();
+  }, [newPhotoCheck]);
   
 
 
