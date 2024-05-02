@@ -434,7 +434,7 @@ const EventDetailScreen = ({ route }) => {
       {eventName.length > 18 ? `${eventName.substring(0, 18)}...` : eventName}
     </Text>
     <Text style={styles.description}>
-      {eventDescription.length > 50 ? `${eventDescription.substring(0, 50)}...` : eventDescription}
+    {eventDescription && eventDescription.length > 50 ? `${eventDescription.substring(0, 50)}...` : eventDescription}
     </Text>
   </View>
 </View>
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 5,
   },
   gridItem: {
     flex: 1,
@@ -630,7 +630,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 130, // Adjust this height as needed
     resizeMode: "cover",
-    borderRadius: 8,
+    borderRadius: 0,
+    margin: 0,
+    padding: 0,
   },
   modalContainer: {
     flex: 1,

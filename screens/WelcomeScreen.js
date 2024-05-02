@@ -378,7 +378,11 @@ function WelcomeScreen() {
           renderItem={({ item }) =>
             item ? (
               <TouchableOpacity
-                style={[styles.eventItem]}
+              style={[
+                styles.eventItem,
+                { width: events.length > 1 ? "45%" : "95%" },
+                { height: events.length > 1 ? 150 : 200 } 
+              ]}
                 onPress={() =>
                   navigation.navigate("EventDetail", {
                     eventId: item.id,
@@ -414,6 +418,7 @@ function WelcomeScreen() {
           visible={isModalVisible}
           onRequestClose={toggleModal}
         >
+          
           <View style={styles.modalContainer}>
             <Text style={styles.createEvent}>Create Event</Text>
             <Text style={styles.inputText}>
@@ -537,6 +542,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "white",
+    width: "100%",
   },
   addEventModal: {
     marginTop:100,
@@ -566,19 +572,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     position: "absolute",
-    bottom: 40,
+    bottom: 20,
   },
 
   eventItem: {
-    width: "43%",
+    width: "45%",
     height: 150,
     borderWidth: 1,
     borderColor: "#cbd7f3",
     borderRadius: 20,
     marginBottom: 8,
-    margin: 12,
+    margin: "2.5%",
     backgroundColor: "rgba(224, 174, 208, 0)",
-    position: "relative",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -609,12 +614,12 @@ const styles = StyleSheet.create({
   createEvent: {
     fontSize: 30,
     textAlign: "center",
-    margin: 30,
-    marginTop: 90,
+    margin: 15,
+    marginTop: 70,
   },
   input: {
     width: "90%", // Width without units in React Native
-    height: 65, // Height without units in React Native
+    height: "7%", // Height without units in React Native
     flexGrow: 0, // Use flexGrow property directly
     marginVertical: 9, // Margin for vertical spacing
     borderRadius: 10,
@@ -622,7 +627,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 0, 0, 0.1)",
     margin: 15,
     padding: 15,
-    fontSize: 20,
+    fontSize: 18,
   },
   inputSearch: {
     height: 60, // Height without units in React Native
@@ -644,7 +649,7 @@ const styles = StyleSheet.create({
     marginLeft: 10, // Adjust spacing as needed
   },
   inputText: {
-    fontSize: 24,
+    fontSize: 20,
     margin: 15,
   },
 
@@ -653,7 +658,7 @@ const styles = StyleSheet.create({
   },
   eventPhotoButton: {
     width: "90%",
-    height: 150,
+    height: "40%",
     flexGrow: 0,
     margin: "8.8px 167px 0 0",
     padding: "30px 7px 18px",
