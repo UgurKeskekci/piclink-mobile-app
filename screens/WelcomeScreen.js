@@ -314,13 +314,11 @@ setEventAdded(true);
   
       setAddEventError("");
       toggleExistingEventModal();
-      setEventAdded(true);
-      Alert.alert("Success", "Event added successfully.");
-  
+      
       // Refresh the events list
       fetchEvents();
     } else {
-      Alert.alert("Error", "Event not found. Please enter a valid event ID.");
+      setAddEventError("Event not found. Please enter a valid event ID.");
     } 
   };
   

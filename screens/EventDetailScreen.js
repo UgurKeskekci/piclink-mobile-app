@@ -11,7 +11,7 @@ import {
   Switch,
   Image,
   Platform,
-  Alert,
+  Alert,ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -56,7 +56,8 @@ const EventDetailScreen = ({ route }) => {
   const [isEventDataAdded, setIsEventDataAdded] = useState(false);
   const [newPhotoCheck, setNewPhotoCheck] = useState(null);
 
-  
+  const [isLoading, setIsLoading] = useState(true); // State for loading icon
+
   const goToHome = () => {
     navigation.navigate('Welcome');
   };
@@ -87,15 +88,16 @@ const EventDetailScreen = ({ route }) => {
         if (uid) {
           setUserId(uid);
         }
+        setIsLoading(true); // Set loading state to true when fetching data
         const photos = await fetchPhotosFromFirebase(userId, eventId);
         setGridImages(photos);
+        setIsLoading(false); // Set loading state to false when photos are loaded
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
-  }, [userId, eventId])
-
+  }, [userId, eventId]);
 
 
   // Navigate to profile screen
@@ -339,6 +341,10 @@ const EventDetailScreen = ({ route }) => {
       </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
+       {/* Other components */}
+       {isLoading ? ( // Conditionally render loading icon
+        <ActivityIndicator size="large" color="blue" />
+      ) : (
       <View style={styles.gridContainer}>
         {gridImages.map((imageData, index) => (
           <TouchableOpacity
@@ -362,7 +368,7 @@ const EventDetailScreen = ({ route }) => {
           </TouchableOpacity>
         ))}
       </View>
-
+)}
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
