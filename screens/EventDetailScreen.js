@@ -29,6 +29,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
+import { fetchPhotosFromFirebase, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
 
 
 
@@ -55,60 +56,11 @@ const EventDetailScreen = ({ route }) => {
   const [isEventDataAdded, setIsEventDataAdded] = useState(false);
   const [newPhotoCheck, setNewPhotoCheck] = useState(null);
 
+  
   const goToHome = () => {
     navigation.navigate('Welcome');
   };
   
-
-  const fetchPhotos = async () => {
-    try {
-      // Check if photos are available in local cache
-      const cachedPhotos = await AsyncStorage.getItem(`eventPhotos_${eventId}`);
-      if (cachedPhotos) {
-        // Parse cached data
-        const photos = JSON.parse(cachedPhotos);
-        return photos;
-      } else {
-        // Fetch photos from Firebase
-        const photosSnapshot = await getDocs(collection(db, `users/${userId}/events/${eventId}/photos`));
-        if (!photosSnapshot.empty) {
-          const photos = photosSnapshot.docs.map((doc) => doc.data());
-          // Store fetched photos in cache
-          await AsyncStorage.setItem(`eventPhotos_${eventId}`, JSON.stringify(photos));
-          return photos;
-        } else {
-          return [];
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching photos:", error);
-      throw error;
-    }
-  };
-
-  const storePhotosInCache = async (photos) => {
-    try {
-      await AsyncStorage.setItem(`eventPhotos_${eventId}`, JSON.stringify(photos));
-    } catch (error) {
-      console.error("Error storing photos in cache:", error);
-    }
-  };
-  
-  // Fetch and update photos with caching
-  useEffect(() => {
-    const fetchPhotosAndUpdateState = async () => {
-      try {
-        const photos = await fetchPhotos();
-        setGridImages(photos); // Update gridImages state with fetched photos
-        storePhotosInCache(photos); // Store fetched photos in cache
-      } catch (error) {
-        console.error("Error fetching photos:", error);
-      }
-    };
-    fetchPhotosAndUpdateState();
-  }, [newPhotoCheck]);
-  
-
 
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
@@ -126,80 +78,24 @@ const EventDetailScreen = ({ route }) => {
     fetchAndLogUid();
   }, []);
 
-
-
-useEffect(() => {
-  // Check if event data has already been added to Firestore
-  if (!isEventDataAdded) {
-    const fetchPhotosFromStorageAndAddToFirestore = async () => {
+  
+  
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        // Construct the path to the folder in Firebase Storage using the event ID
-        const storagePath = `eventPhotos/${eventId}`;
-        // Get the list of files (photos) from that folder
-        const storageRef = storage.ref().child(storagePath);
-        const storageFiles = await storageRef.listAll();
-    
-        // Iterate through each file (photo) in the storage
-        const photoDataPromises = storageFiles.items.map(async (fileRef) => {
-          // Get the download URL of the photo
-          const downloadURL = await fileRef.getDownloadURL();
-    
-          // Fetch metadata of the photo from Firestore using its document ID
-          const photoDocRef = doc(db, `users/${userId}/events/${eventId}/photos`, fileRef.name);
-          const photoDocSnapshot = await getDoc(photoDocRef);
-    
-          // Check if the photo document already exists in Firestore
-          if (photoDocSnapshot.exists()) {
-            // If it exists, use the existing data
-            const existingPhotoData = photoDocSnapshot.data();
-            return existingPhotoData;
-          } else {
-            // If it doesn't exist, create new photo data with default values
-            const newPhotoData = {
-              accessUrl: downloadURL,
-              additionDate: new Date().toISOString(),
-              likeNumber: 0,
-              comments: [],
-              owner: userId,
-              photoId: fileRef.name
-            };
-            // Add the new photo data to Firestore
-            await setDoc(photoDocRef, newPhotoData);
-            return newPhotoData;
-          }
-        });
-    
-        // Wait for all photo data promises to resolve
-        const photoDataArray = await Promise.all(photoDataPromises);
-        console.log("Photos fetched and added to Firestore:", photoDataArray);
-        
-        // Set the flag to indicate that event data has been added to Firestore
-        setIsEventDataAdded(true);
+        const uid = await AsyncStorage.getItem("uid");
+        if (uid) {
+          setUserId(uid);
+        }
+        const photos = await fetchPhotosFromFirebase(userId, eventId);
+        setGridImages(photos);
       } catch (error) {
-        console.error("Error fetching photos from Firebase Storage and adding to Firestore:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    
-    // Call the function to fetch photos from Firebase Storage and add them to Firestore
-    fetchPhotosFromStorageAndAddToFirestore();
-  }
-}, [eventId, userId, isEventDataAdded]);
-  
+    fetchData();
+  }, [userId, eventId])
 
-
-
-
-useEffect(() => {
-  const fetchPhotosAndUpdateState = async () => {
-    try {
-      const photos = await fetchPhotos();
-      setGridImages(photos); // Update gridImages state with fetched photos
-    } catch (error) {
-      console.error("Error fetching photos:", error);
-    }
-  };
-  fetchPhotosAndUpdateState();
-}, [newPhotoCheck]);
 
 
   // Navigate to profile screen
@@ -238,65 +134,17 @@ useEffect(() => {
     }
   };
 
-  // Handle photo selection from image picker
   const handlePhotoSelection = async (selectedPhotos) => {
     try {
-      const photoUrls = await uploadPhotosToStorage(selectedPhotos);
-      await storePhotosInFirestore(photoUrls);
-      setNewPhotoCheck(true)
-      // After storing photos, fetch them again to update state
-      fetchPhotos();
+      const photoData = await Promise.all(selectedPhotos.map((photoUri) => uploadPhotoToStorage(photoUri, eventId, userId)));
+      await storePhotosInFirestore(userId, eventId, photoData);
+      // Fetch photos again to update state
+      const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
+      setGridImages(updatedPhotos);
     } catch (error) {
       console.error("Error handling photo selection:", error);
     }
   };
-  
-
-  
-  // Upload photos to Firebase Storage
-// Upload photos to Firebase Storage
-// Upload photos to Firebase Storage
-const generatePhotoDocumentId = () => {
-  // Generate a unique identifier for each photo document
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-};
-
-const uploadPhotosToStorage = async (photos) => {
-  try {
-    const photoData = [];
-    for (const photoUri of photos) {
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
-      const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
-      const storagePath = `eventPhotos/${eventId}/${imageName}`;
-      const storageRef = storage.ref().child(storagePath);
-      await storageRef.put(blob);
-      const downloadURL = await storageRef.getDownloadURL();
-      const photoInfo = {
-        accessUrl: downloadURL,
-        additionDate: new Date().toISOString(),
-        likeNumber: 0,
-        comments: [],
-        owner: userId,
-        photoId: imageName
-      };
-      
-      // Use a fixed document ID generated for each photo
-      const photoDocId = generatePhotoDocumentId();
-      const photoDocRef = doc(db, `users/${userId}/events/${eventId}/photos`, photoDocId);
-      await setDoc(photoDocRef, photoInfo);
-
-      photoData.push(photoInfo);
-    }
-    return photoData;
-  } catch (error) {
-    console.error("Error uploading photos to Firebase Storage:", error);
-    throw error;
-  }
-};
-
-
-
 
   const createQRCode = () => {
     const qrData = eventId;
@@ -317,52 +165,8 @@ const uploadPhotosToStorage = async (photos) => {
     setModalVisible(false); // Close the "Share" modal
   };
 
-  const storePhotosInFirestore = async (photoData) => {
-    try {
-      const photosRef = collection(db, `users/${userId}/events/${eventId}/photos`);
-      await Promise.all(photoData.map(async (photo) => {
-        // Add the photo data to Firestore
-        await addDoc(photosRef, photo);
-      }));
-      console.log("Photos uploaded and data stored successfully!");
-    } catch (error) {
-      console.error("Error storing photo data in Firestore:", error);
-    }
-  };
-  
-  
 
 
-
-  const renderSelectedImages = () => {
-    return (
-      <View style={styles.gridContainer}>
-        {gridImages.map((imageData, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => {
-              navigation.navigate("PhotoDetail", {
-                photoUri: imageData.accessUrl,
-                photoName: "Username",
-                photoDescription: "Example Description",
-                eventId: eventId,
-                userId: userId,
-                photoId: imageData.photoId,
-              });
-            }}
-            style={styles.gridItem}
-          >
-            <Image
-              source={{ uri: imageData.accessUrl }}
-              style={styles.selectedImage}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-    );
-  };
-  
-  
   
   return (
     <View style={styles.container}>
@@ -535,7 +339,29 @@ const uploadPhotosToStorage = async (photos) => {
       </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
-      <View>{renderSelectedImages()}</View>
+      <View style={styles.gridContainer}>
+        {gridImages.map((imageData, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => {
+              navigation.navigate("PhotoDetail", {
+                photoUri: imageData.accessUrl,
+                photoName: "Username",
+                photoDescription: "Example Description",
+                eventId: eventId,
+                userId: userId,
+                photoId: imageData.photoId,
+              });
+            }}
+            style={styles.gridItem}
+          >
+            <Image
+              source={{ uri: imageData.accessUrl }}
+              style={styles.selectedImage}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
