@@ -168,6 +168,7 @@ const ProfilePage = () => {
           </View>
         )}
       </TouchableOpacity>
+      
       <View style={styles.textContainer}>
         <Text style={styles.username}>Username: {username}</Text>
         <Text style={styles.userInfo}>Email: {userEmail}</Text>
@@ -236,11 +237,10 @@ const ProfilePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
     backgroundColor: "white",
   },
   iconContainer: {
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: 30,
   },
   textContainer:{
