@@ -250,6 +250,7 @@ useEffect(() => {
       console.error("Error handling photo selection:", error);
     }
   };
+<<<<<<< HEAD
   
 
   
@@ -297,6 +298,42 @@ const uploadPhotosToStorage = async (photos) => {
 
 
 
+=======
+  const generateRandomId = () => {
+    // Generate a random ID using Math.random() and converting it to base 36
+    return Math.random().toString(36).substring(2);
+  };
+  // Upload photos to Firebase Storage
+  const uploadPhotosToStorage = async (photos) => {
+    try {
+      const photoData = [];
+      for (const photoUri of photos) {
+        const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
+        const response = await fetch(photoUri);
+        const blob = await response.blob();
+        const storageRef = storage
+          .ref()
+          .child(`eventPhotos/${eventId}/${imageName}`);
+        await storageRef.put(blob);
+        const downloadURL = await storageRef.getDownloadURL();
+        const photoInfo = {
+          photoId: generateRandomId(),
+          accessUrl: downloadURL,
+          additionDate: new Date().toISOString(), // Current date and time
+          likeNumber: 0, // Initial like count
+          comments: [], // Initial empty array for comments
+          owner: userId
+        };
+        photoData.push(photoInfo);
+      }
+      return photoData;
+    } catch (error) {
+      console.error("Error uploading photos to Firebase Storage:", error);
+      throw error;
+    }
+  };
+  
+>>>>>>> 4772939601e3632ffa13b74f12582c577ea74d5c
 
   const createQRCode = () => {
     const qrData = eventId;
@@ -317,6 +354,7 @@ const uploadPhotosToStorage = async (photos) => {
     setModalVisible(false); // Close the "Share" modal
   };
 
+<<<<<<< HEAD
   const storePhotosInFirestore = async (photoData) => {
     try {
       const photosRef = collection(db, `users/${userId}/events/${eventId}/photos`);
@@ -325,6 +363,26 @@ const uploadPhotosToStorage = async (photos) => {
         await addDoc(photosRef, photo);
       }));
       console.log("Photos uploaded and data stored successfully!");
+=======
+  // Store photo URLs in Firestore
+  const storePhotoUrlsInFirestore = async (photoData) => {
+    try {
+      const eventRef = doc(db, `users/${userId}/events/${eventId}`);
+      if (eventRef) {
+        const eventSnapshot = await getDoc(eventRef);
+        if (eventSnapshot.exists()) {
+          const eventData = eventSnapshot.data();
+          const existingPhotos = eventData.photos || [];
+          const updatedPhotos = existingPhotos.concat(photoData);
+          await updateDoc(eventRef, { photos: updatedPhotos });
+          console.log("Photos uploaded and data stored successfully!");
+        } else {
+          console.error("Event document does not exist!");
+        }
+      } else {
+        console.error("Event reference is undefined!");
+      }
+>>>>>>> 4772939601e3632ffa13b74f12582c577ea74d5c
     } catch (error) {
       console.error("Error storing photo data in Firestore:", error);
     }
