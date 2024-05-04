@@ -32,9 +32,8 @@ import {
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
-import QRScanner from './QRScanner'; 
-import { getAuth } from 'firebase/auth';
-
+import QRScanner from "./QRScanner";
+import { getAuth } from "firebase/auth";
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
@@ -60,11 +59,27 @@ function WelcomeScreen() {
   const [username, setUsername] = useState(null);
   const [eventAdded, setEventAdded] = useState(false);
 
+  const [isOptionModalVisible, setOptionModalVisible] = useState(false);
 
+  const toggleOptionModal = () => {
+    setOptionModalVisible(!isOptionModalVisible);
+  };
+
+  const handleCreateEvent = () => {
+    toggleOptionModal();
+    toggleModal();
+  };
+
+  const handleJoinEvent = () => {
+    toggleOptionModal();
+    toggleExistingEventModal();
+
+  };
 
   const toggleExistingEventModal = () => {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
+
   const [searchText, setSearchText] = useState(""); // Define setSearchText here
 
   useEffect(() => {
@@ -197,19 +212,20 @@ function WelcomeScreen() {
         profilePhoto: eventProfilePhoto,
       });
       console.log("Event added with ID: ", eventDocRef.id);
-  
+
       // Create a subcollection named "photos" for the event
       // Create a subcollection named "photos" for the event
-const photosCollectionRef = collection(db, `users/${userId}/events/${eventDocRef.id}/photos`);
-const newPhotoDocRef = doc(photosCollectionRef); // Create a new document reference
-await setDoc(newPhotoDocRef, {}); // Create an empty document in the photos subcollection
-setEventAdded(true);
+      const photosCollectionRef = collection(
+        db,
+        `users/${userId}/events/${eventDocRef.id}/photos`
+      );
+      const newPhotoDocRef = doc(photosCollectionRef); // Create a new document reference
+      await setDoc(newPhotoDocRef, {}); // Create an empty document in the photos subcollection
+      setEventAdded(true);
     } catch (error) {
       console.error("Error adding event: ", error);
     }
   };
-  
-  
 
   const createEvent = async () => {
     if (!eventName.trim()) {
@@ -220,12 +236,12 @@ setEventAdded(true);
       setEventNameError(false);
       setEventNameErrorMessage("");
     }
-  
+
     await addEventDataToFirestore(); // Wait for adding event data to Firestore
-  
+
     // Fetch events again to update the list with the newly added event
     await fetchEvents();
-  
+
     setEventName("");
     setEventDescription("");
     setSelectedPhotos([]);
@@ -278,63 +294,71 @@ setEventAdded(true);
 
   const addExistingEvent = async () => {
     const enteredEventId = existingEventInput.trim();
-    
+
     // Fetch the existing event
-    const eventsQuery = collectionGroup(db, 'events');
+    const eventsQuery = collectionGroup(db, "events");
     const snapshot = await getDocs(eventsQuery);
-    const allEvents = snapshot.docs.map(doc => ({
+    const allEvents = snapshot.docs.map((doc) => ({
       id: doc.id,
       userId: doc.ref.parent.parent.id, // Get the user ID
       ...doc.data(),
     }));
-    
+
     // Find the matching event
-    const matchingEvent = allEvents.find(event => event.id === enteredEventId);
+    const matchingEvent = allEvents.find(
+      (event) => event.id === enteredEventId
+    );
     console.log("Matching Event:", matchingEvent); // Add this log to check the value of matchingEvent
     if (matchingEvent) {
       // Add the event to the current user's database with the same ID
-      const newDocRef = await setDoc(doc(collection(db, `users/${userId}/events`), matchingEvent.id), {
-        ...matchingEvent, // Include all properties of the existing event
-        // You can add additional properties here if needed
-      });
+      const newDocRef = await setDoc(
+        doc(collection(db, `users/${userId}/events`), matchingEvent.id),
+        {
+          ...matchingEvent, // Include all properties of the existing event
+          // You can add additional properties here if needed
+        }
+      );
       console.log("Event added with ID:", newDocRef.id);
-  
+
       // Fetch the photos subcollection from the existing event
-      const photosQuery = collection(db, `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`);
+      const photosQuery = collection(
+        db,
+        `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`
+      );
       const photosSnapshot = await getDocs(photosQuery);
-  
+
       // Copy each document in the photos subcollection to the current user's database
       const batch = writeBatch(db);
-      photosSnapshot.forEach(doc => {
-        const newDocRef = doc(collection(db, `users/${userId}/events/${matchingEvent.id}/photos`), doc.id);
+      photosSnapshot.forEach((doc) => {
+        const newDocRef = doc(
+          collection(db, `users/${userId}/events/${matchingEvent.id}/photos`),
+          doc.id
+        );
         // Include the document data when copying the photo
         batch.set(newDocRef, doc.data());
       });
       await batch.commit();
-  
+
       setAddEventError("");
       toggleExistingEventModal();
-      
+
       // Refresh the events list
       fetchEvents();
     } else {
       setAddEventError("Event not found. Please enter a valid event ID.");
-    } 
+    }
   };
-  
-  
 
   const handleQRScanned = (data) => {
     setExistingEventInput(data); // Update existingEventInput with the scanned data
   };
-  
 
   useEffect(() => {
     if (eventAdded) {
-        fetchEvents(); // Fetch events again to update the list with the newly added event
-        setEventAdded(false); // Reset eventAdded state
+      fetchEvents(); // Fetch events again to update the list with the newly added event
+      setEventAdded(false); // Reset eventAdded state
     }
-}, [eventAdded]);
+  }, [eventAdded]);
 
   return (
     <View style={scrollViewStyle}>
@@ -342,7 +366,6 @@ setEventAdded(true);
         ref={scrollViewRef}
         contentContainerStyle={{ paddingBottom: 90 }}
       >
-        
         <TextInput
           style={styles.inputSearch}
           placeholder="Search events..."
@@ -350,15 +373,7 @@ setEventAdded(true);
           onChangeText={handleSearch}
           value={searchText} // Bind the value to searchText state
         />
-        <TouchableOpacity
-          onPress={toggleExistingEventModal}
-          style={styles.addButton}
-        >
-        <Icon name="add-outline" size={30} color="#6b92ed"  />
-       
 
-        </TouchableOpacity>
-       
         {/* Existing Event Modal */}
         <Modal
           animationType="slide"
@@ -367,7 +382,7 @@ setEventAdded(true);
           onRequestClose={toggleExistingEventModal}
         >
           <View style={styles.addEventModal}>
-          <QRScanner onQRScanned={handleQRScanned} /> 
+            <QRScanner onQRScanned={handleQRScanned} />
             <TextInput
               style={styles.input}
               placeholder="Enter event ID "
@@ -375,27 +390,25 @@ setEventAdded(true);
               onChangeText={setExistingEventInput} // Ensure that onChangeText updates existingEventInput
             />
             <View style={styles.addEventButtons}>
-            <TouchableOpacity
-              onPress={addExistingEvent}
-              style={styles.cancelButton}
-            >
-              <Text>Add Event</Text>
-            </TouchableOpacity>
-            {addEventError !== "" && (
-              <Text style={styles.errorText}>{addEventError}</Text>
-            )}
-            <TouchableOpacity
-              onPress={toggleExistingEventModal}
-              style={styles.cancelButton}
-            >
-              <Text>Cancel</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={addExistingEvent}
+                style={styles.cancelButton}
+              >
+                <Text>Add Event</Text>
+              </TouchableOpacity>
+              {addEventError !== "" && (
+                <Text style={styles.errorText}>{addEventError}</Text>
+              )}
+              <TouchableOpacity
+                onPress={toggleExistingEventModal}
+                style={styles.cancelButton}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
             </View>
-            
           </View>
         </Modal>
 
-       
         <FlatList
           data={events}
           keyExtractor={(item) => item.id.toString()}
@@ -403,11 +416,11 @@ setEventAdded(true);
           renderItem={({ item }) =>
             item ? (
               <TouchableOpacity
-              style={[
-                styles.eventItem,
-                { width: events.length > 1 ? "45%" : "95%" },
-                { height: events.length > 1 ? 150 : 200 } 
-              ]}
+                style={[
+                  styles.eventItem,
+                  { width: events.length > 1 ? "45%" : "95%" },
+                  { height: events.length > 1 ? 150 : 200 },
+                ]}
                 onPress={() =>
                   navigation.navigate("EventDetail", {
                     eventId: item.id,
@@ -422,7 +435,7 @@ setEventAdded(true);
                     <Text>{item.name}</Text>
                   </View>
                 </View>
-                  
+
                 <View style={styles.eventBoxImage}>
                   <Image
                     source={{ uri: item.profilePhoto }}
@@ -443,7 +456,6 @@ setEventAdded(true);
           visible={isModalVisible}
           onRequestClose={toggleModal}
         >
-          
           <View style={styles.modalContainer}>
             <Text style={styles.createEvent}>Create Event</Text>
             <Text style={styles.inputText}>
@@ -533,7 +545,27 @@ setEventAdded(true);
           </View>
         </Modal>
       </ScrollView>
-
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isOptionModalVisible}
+        onRequestClose={toggleOptionModal}
+      >
+        <View style={styles.optionModalContainer}>
+          <TouchableOpacity
+            style={styles.optionButton}
+            onPress={handleCreateEvent}
+          >
+            <Text>Create Event</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.optionButton}
+            onPress={handleJoinEvent}
+          >
+            <Text>Join Event</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity
@@ -547,7 +579,7 @@ setEventAdded(true);
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
-          onPress={toggleModal}
+          onPress={toggleOptionModal}
         >
           <AntDesign name="pluscircleo" size={55} color="white" />
         </TouchableOpacity>
@@ -570,7 +602,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   addEventModal: {
-    marginTop:100,
+    marginTop: 100,
     flex: 1,
     justifyContent: "flex-start",
     backgroundColor: "#EFECEC",
@@ -588,7 +620,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
     alignItems: "center",
     width: "100%",
-    
   },
 
   modalButtonsContainer: {
@@ -598,6 +629,21 @@ const styles = StyleSheet.create({
     width: "100%",
     position: "absolute",
     bottom: 20,
+  },
+  optionModalContainer: {
+    position: "absolute",
+    bottom: 50,
+    width: "100%",
+    backgroundColor: "white",
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    elevation: 5, // Add elevation for Android shadow effect
+  },
+  optionButton: {
+    alignItems: "center",
+    paddingVertical: 15,
   },
 
   eventItem: {

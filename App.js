@@ -12,6 +12,7 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import EventDetailScreen from './screens/EventDetailScreen'; 
 import ProfilePage from './screens/ProfilePage'; 
 import PhotoDetailScreen from './screens/PhotoDetailsScreen'; 
+import GuestScreen from './screens/GuestScreen'; 
 
 
 
@@ -70,7 +71,7 @@ function AuthenticatedStack() {
        /> 
       <Stack.Screen name="Profile" component={ProfilePage} />
       <Stack.Screen name="PhotoDetail" component={PhotoDetailScreen} />
-
+      <Stack.Screen name="Guest" component={GuestScreen} />
     </Stack.Navigator>
   );
 }
