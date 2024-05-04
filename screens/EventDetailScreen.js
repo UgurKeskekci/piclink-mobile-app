@@ -250,55 +250,6 @@ useEffect(() => {
       console.error("Error handling photo selection:", error);
     }
   };
-<<<<<<< HEAD
-  
-
-  
-  // Upload photos to Firebase Storage
-// Upload photos to Firebase Storage
-// Upload photos to Firebase Storage
-const generatePhotoDocumentId = () => {
-  // Generate a unique identifier for each photo document
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-};
-
-const uploadPhotosToStorage = async (photos) => {
-  try {
-    const photoData = [];
-    for (const photoUri of photos) {
-      const response = await fetch(photoUri);
-      const blob = await response.blob();
-      const imageName = photoUri.substring(photoUri.lastIndexOf("/") + 1);
-      const storagePath = `eventPhotos/${eventId}/${imageName}`;
-      const storageRef = storage.ref().child(storagePath);
-      await storageRef.put(blob);
-      const downloadURL = await storageRef.getDownloadURL();
-      const photoInfo = {
-        accessUrl: downloadURL,
-        additionDate: new Date().toISOString(),
-        likeNumber: 0,
-        comments: [],
-        owner: userId,
-        photoId: imageName
-      };
-      
-      // Use a fixed document ID generated for each photo
-      const photoDocId = generatePhotoDocumentId();
-      const photoDocRef = doc(db, `users/${userId}/events/${eventId}/photos`, photoDocId);
-      await setDoc(photoDocRef, photoInfo);
-
-      photoData.push(photoInfo);
-    }
-    return photoData;
-  } catch (error) {
-    console.error("Error uploading photos to Firebase Storage:", error);
-    throw error;
-  }
-};
-
-
-
-=======
   const generateRandomId = () => {
     // Generate a random ID using Math.random() and converting it to base 36
     return Math.random().toString(36).substring(2);
@@ -333,7 +284,6 @@ const uploadPhotosToStorage = async (photos) => {
     }
   };
   
->>>>>>> 4772939601e3632ffa13b74f12582c577ea74d5c
 
   const createQRCode = () => {
     const qrData = eventId;
@@ -387,10 +337,41 @@ const uploadPhotosToStorage = async (photos) => {
       console.error("Error storing photo data in Firestore:", error);
     }
   };
-  
-  
+  // Pick image from device gallery
 
+  const handleDownload = async () => {
+    try {
+      const downloadDir = FileSystem.documentDirectory + "downloaded_photos"; // Directory to store downloaded photos
+      await FileSystem.makeDirectoryAsync(downloadDir, { intermediates: true }); // Ensure the directory exists
+      console.log("Download directory:", downloadDir);
 
+      // Loop through selectedImages and download each photo
+      for (let i = 0; i < selectedImages.length; i++) {
+        const photoUrl = selectedImages[i];
+        const fileName = photoUrl.substring(photoUrl.lastIndexOf("/") + 1);
+        const downloadPath = downloadDir + "/" + fileName;
+        console.log("Downloaded file URI:", photoUrl);
+        console.log("Destination directory:", downloadPath);
+        // Download the photo
+        const { uri } = await FileSystem.downloadAsync(photoUrl, downloadPath);
+
+        // Save the downloaded photo to the device's media library
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        console.log("Downloaded and saved to media library:", asset);
+      }
+
+      Alert.alert(
+        "Download Complete",
+        "All photos have been downloaded and saved to your device's gallery."
+      );
+    } catch (error) {
+      console.error("Error downloading photos:", error);
+      Alert.alert(
+        "Download Error",
+        "Failed to download photos. Please try again."
+      );
+    }
+  };
 
   const renderSelectedImages = () => {
     return (
