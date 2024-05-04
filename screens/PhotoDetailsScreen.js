@@ -91,31 +91,29 @@ const PhotoDetailScreen = ({ route }) => {
       <Image source={{ uri: photoUri }} style={styles.photo} />
       <View style={styles.separator}></View>
 
+      <View style={styles.interaction}>
+  <View style={styles.iconContainer}>
+    <TouchableOpacity onPress={likePhoto}>
+      <Icon name="heart-outline" size={30} color="black" />
+    </TouchableOpacity>
+    <Text style={styles.titleText}>{likeNumber} Likes</Text>
+  </View>
+  <View style={styles.iconContainer}>
+    <TouchableOpacity onPress={() => setShowCommentInput(!showCommentInput)}>
+      <Icon name="chatbubble-outline" size={27} color="black" />
+    </TouchableOpacity>
+    <Text style={styles.titleText}>{comments.length} Comments</Text>
+  </View>
+</View>
+
+
       <View style={styles.detailsContainer}>
-        <View style={{ flexDirection: "row" }}>
+        <View style={styles.eventDetail}>
           <Text style={styles.name}>{photoName}</Text>
           <Text style={styles.description}> {photoDescription}</Text>
         </View>
 
-        <View
-          style={{ flexDirection: "row", marginBottom: 10, paddingTop: 10 }}
-        >
-          <TouchableOpacity onPress={likePhoto}>
-            <Icon name="heart-outline" size={30} color="black" />
-          </TouchableOpacity>
-          <Text style={{ paddingRight: 40, paddingTop: 2 }}>
-            {likeNumber} Likes
-          </Text>
-          <TouchableOpacity
-            onPress={() => setShowCommentInput(!showCommentInput)}
-          >
-            <Icon name="chatbubble-outline" size={27} color="black" />
-          </TouchableOpacity>
-
-          <Text style={{ paddingRight: 40, paddingTop: 2 }}>
-            {comments.length} Comments
-          </Text>
-        </View>
+        
 
         {/* Render comments */}
         {comments
@@ -161,36 +159,65 @@ const styles = StyleSheet.create({
   },
   separator: {
     borderBottomWidth: 1,
-    borderBottomColor: "black",
+    borderBottomColor: "rgba(0, 0, 0, 0.2)",
   },
   photo: {
     flex: 0.6,
-    resizeMode: "cover",
+    height: "%100",
+    margin: 20,
   },
   detailsContainer: {
     flex: 0.6,
     padding: 10,
   },
+  eventDetail: {
+    flexDirection: "column",
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 30, // Adjust the spacing between icon and text if needed
+  },
+  
+  titleText: {
+    marginLeft: 8, // Adjust the spacing between icon and text if needed
+  },
+  
+  interaction: {
+    flexDirection: "row",
+    marginBottom: 10,
+    marginTop: 20,
+    marginLeft: 20,
+
+  },
   name: {
     fontSize: 18,
     fontWeight: "bold",
+    paddingTop: 5,
+    marginLeft: 15,
   },
   description: {
     fontSize: 16,
-    paddingTop: 2,
+    paddingTop: 5,
+    marginLeft: 12,
+    
   },
   commentContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 10,
+    marginLeft: 15, // Adjust the left margin as needed
+    marginRight: 15, // Adjust the right margin as needed
   },
   commentInput: {
     flex: 1,
     borderWidth: 2,
-    borderColor: "#ccc",
+    borderColor: "rgba(0, 0, 0, 0.2)",
     borderRadius: 5,
     paddingHorizontal: 10,
     marginRight: 10,
+    paddingVertical: 8, // Adjust the vertical padding as needed
+    fontSize: 16, // Adjust the font size as needed
   },
   submitButton: {
     color: "blue",
@@ -199,6 +226,7 @@ const styles = StyleSheet.create({
   commentText: {
     marginTop: 5,
     fontSize: 16,
+    marginLeft: 20,
   },
   showMoreButton: {
     color: "blue",
