@@ -12,6 +12,56 @@ export const fetchPhotosFromFirebase = async (userId, eventId) => {
     throw error;
   }
 };
+export const copyPhotosInStorage = async (sourcePath, destinationPath) => {
+  try {
+    // Get reference to the source path
+    const sourceRef = storage.ref(sourcePath);
+    // List all items (photos) in the source path
+    const { items } = await sourceRef.listAll();
+
+    // Iterate through each photo and copy it to the destination path
+    await Promise.all(
+      items.map(async (item) => {
+        const destinationRef = storage.ref(destinationPath).child(item.name);
+        await item.copyTo(destinationRef);
+      })
+    );
+
+    console.log("Photos copied successfully.");
+  } catch (error) {
+    console.error("Error copying photos:", error);
+  }
+};
+
+export const fetchPhotosFromStorage = async (userId, eventId) => {
+  try {
+    const storagePath = `eventPhotos/${eventId}/`;
+    const storageRef = storage.ref().child(storagePath);
+    
+    // List all items (photos) in the storage folder
+    const storageItems = await storageRef.listAll();
+    
+    // Get download URLs for each photo
+    const photoPromises = storageItems.items.map(async (item) => {
+      const downloadURL = await item.getDownloadURL();
+      return {
+        accessUrl: downloadURL,
+        additionDate: new Date().toISOString(),
+        likeNumber: 0,
+        comments: [],
+        owner: userId,
+        photoId: item.name,
+      };
+    });
+    
+    // Wait for all promises to resolve
+    const photos = await Promise.all(photoPromises);
+    return photos;
+  } catch (error) {
+    console.error("Error fetching photos from Firebase Storage:", error);
+    throw error;
+  }
+};
 
 export const storePhotosInFirestore = async (userId, eventId, photos) => {
   try {

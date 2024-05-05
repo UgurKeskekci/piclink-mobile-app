@@ -29,7 +29,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { fetchPhotosFromFirebase, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
+import { fetchPhotosFromFirebase, fetchPhotosFromStorage, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
 
 
 
@@ -62,7 +62,36 @@ const EventDetailScreen = ({ route }) => {
     navigation.navigate('Welcome');
   };
   
-
+  const syncNewPhotos = async () => {
+    try {
+      const storagePhotos = await fetchPhotosFromStorage(userId, eventId);
+      const photosCollectionRef = collection(db, `users/${userId}/events/${eventId}/photos`);
+      const batch = db.batch();
+      const existingPhotoIds = new Set(); // Track existing photo IDs
+      // Get existing photo IDs
+      const photosQuerySnapshot = await getDocs(photosCollectionRef);
+      photosQuerySnapshot.forEach((doc) => {
+        existingPhotoIds.add(doc.id);
+      });
+      // Add new photos to batch only if their IDs don't exist in Firestore
+      storagePhotos.forEach((photo) => {
+        if (!existingPhotoIds.has(photo.photoId)) {
+          const photoRef = doc(photosCollectionRef, photo.photoId);
+          batch.set(photoRef, photo);
+        }
+      });
+      await batch.commit();
+      const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
+      setGridImages(updatedPhotos);
+    } catch (error) {
+      console.error("Error syncing new photos:", error);
+    }
+  };
+  
+  useEffect(() => {
+    // Call the function when component mounts
+    syncNewPhotos();
+  }, []);
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -89,8 +118,29 @@ const EventDetailScreen = ({ route }) => {
           setUserId(uid);
         }
         setIsLoading(true); // Set loading state to true when fetching data
-        const photos = await fetchPhotosFromFirebase(userId, eventId);
-        setGridImages(photos);
+  
+        // Check if the /photos/ subcollection exists for the event
+        const photosCollectionRef = collection(db, `users/${userId}/events/${eventId}/photos`);
+        const photosQuerySnapshot = await getDocs(photosCollectionRef);
+        const photosExist = !photosQuerySnapshot.empty;
+  
+        if (!photosExist) {
+          // If no photos exist in the /photos/ subcollection, fetch from Firebase Storage
+          const storagePhotos = await fetchPhotosFromStorage(userId, eventId);
+          // Add the fetched photos to the /photos/ subcollection
+          const batch = db.batch();
+          storagePhotos.forEach((photo) => {
+            const photoRef = doc(photosCollectionRef, photo.photoId);
+            batch.set(photoRef, photo);
+          });
+          await batch.commit();
+          setGridImages(storagePhotos);
+        } else {
+          // Photos exist in the /photos/ subcollection, do nothing
+          const photos = await fetchPhotosFromFirebase(userId, eventId);
+          setGridImages(photos);
+        }
+        
         setIsLoading(false); // Set loading state to false when photos are loaded
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -98,6 +148,8 @@ const EventDetailScreen = ({ route }) => {
     };
     fetchData();
   }, [userId, eventId]);
+  
+  
 
 
   // Navigate to profile screen
@@ -136,17 +188,24 @@ const EventDetailScreen = ({ route }) => {
     }
   };
 
-  const handlePhotoSelection = async (selectedPhotos) => {
-    try {
-      const photoData = await Promise.all(selectedPhotos.map((photoUri) => uploadPhotoToStorage(photoUri, eventId, userId)));
-      await storePhotosInFirestore(userId, eventId, photoData);
-      // Fetch photos again to update state
-      const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
-      setGridImages(updatedPhotos);
-    } catch (error) {
-      console.error("Error handling photo selection:", error);
-    }
-  };
+ // In your handlePhotoSelection function where you upload photos to Storage and Firestore
+const handlePhotoSelection = async (selectedPhotos) => {
+  try {
+    const photoData = await Promise.all(selectedPhotos.map((photoUri) => uploadPhotoToStorage(photoUri, eventId, userId)));
+    await storePhotosInFirestore(userId, eventId, photoData);
+    // Fetch photos again to update state
+    const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
+    setGridImages(updatedPhotos);
+  } catch (error) {
+    console.error("Error handling photo selection:", error);
+  }
+};
+
+// Function to fetch new photos from Storage and sync with Firestore
+
+
+// Call syncNewPhotos whenever necessary, such as after a new photo is uploaded
+
 
   const createQRCode = () => {
     const qrData = eventId;
