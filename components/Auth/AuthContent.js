@@ -17,7 +17,6 @@ import FlatButton from "../ui/FlatButton";
 import AuthForm from "./AuthForm";
 import { Colors } from "../../constants/styles";
 import QRScanner from "../../screens/QRScanner"; // Import your QRScanner component
-import GuestScreen from "../../screens/GuestScreen";
 
 function AuthContent({ isLogin, onAuthenticate }) {
   const navigation = useNavigation();
@@ -84,7 +83,6 @@ function AuthContent({ isLogin, onAuthenticate }) {
     setForgotPasswordModalVisible(false);
   }
 
-
   const [existingEventInput, setExistingEventInput] = useState("");
   const [isModalVisible, setModalVisible] = useState(false);
 
@@ -95,22 +93,26 @@ function AuthContent({ isLogin, onAuthenticate }) {
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
 
-  const handleQRScanned = (data) => {
-    setExistingEventInput(data);
-    navigation.navigate("Guest", { scannedData: data });
-  };
+  const [scannedEventId, setScannedEventId] = useState(null);
+
+  function handleQRScanned(data) {
+    setScannedEventId(data);
+  }
+
+  useEffect(() => {
+    if (scannedEventId) {
+      // Navigate to the EventDetailScreen within the current stack
+      navigation.navigate('EventDetail', { eventId: scannedEventId });
+      setExistingEventModalVisible(false);
+    }
+  }, [scannedEventId]);
+  
 
   function handleContinueAsGuest() {
     toggleExistingEventModal();
   }
-  
-  const [scannedData, setScannedData] = useState(null);
-  useEffect(() => {
-    if (scannedData) {
-      navigation.navigate("GuestScreen", { scannedData });
-      setScannedData(null); // Reset scannedData after navigation
-    }
-  }, [scannedData, navigation]);
+
+
 
   return (
     <View style={styles.authContent}>
@@ -147,16 +149,7 @@ function AuthContent({ isLogin, onAuthenticate }) {
         <View style={styles.addEventModal}>
           <QRScanner onQRScanned={handleQRScanned} />
 
-          <TextInput
-              style={styles.input}
-              placeholder="Enter event ID "
-           
-            />
           <View style={styles.addEventButtons}>
-            <TouchableOpacity style={styles.cancelButton}>
-              <Text>Add Event</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               onPress={toggleExistingEventModal}
               style={styles.cancelButton}

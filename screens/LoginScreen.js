@@ -71,7 +71,7 @@ function LoginScreen() {
     return <LoadingOverlay message="Logging you in..." />;
   }
 
-  return <AuthContent isLogin onAuthenticate={loginHandler} />;
+  return <AuthContent isLogin authCtx={authCtx} onAuthenticate={loginHandler} />; // Pass authCtx as a prop
 }
 
 
