@@ -154,6 +154,7 @@ const ProfilePage = () => {
 
   return (
     <View style={styles.container}>
+     <View style={styles.topBar}>
       <TouchableOpacity onPress={pickImage} style={styles.iconContainer}>
         {userProfilePic ? (
           <View>
@@ -172,6 +173,7 @@ const ProfilePage = () => {
         <Text style={styles.username}>Username: {username}</Text>
         <Text style={styles.userInfo}>Email: {userEmail}</Text>
       </View>
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -186,7 +188,7 @@ const ProfilePage = () => {
           <Button title="Change Password" onPress={handleChangePassword} />
         </View>
         {changePasswordMode && (
-          <>
+          <View style={styles.changeGroup}>
             <TextInput
               style={styles.input}
               placeholder="Current Password"
@@ -212,7 +214,7 @@ const ProfilePage = () => {
               <Button title="Save" onPress={handleChangePassword} />
               <Button title="Cancel" onPress={handleCancelChangePassword} />
             </View>
-          </>
+            </View>
         )}
       </View>
       <View style={styles.bottomNavBar}>
@@ -236,16 +238,26 @@ const ProfilePage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
     backgroundColor: "white",
   },
+
+  topBar: {
+    flexDirection: "row",
+  },
   iconContainer: {
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: 30,
+  },
+
+  profilePhotoContainer: {
+    borderWidth: 1,
+    padding: 20,
+    borderRadius: 100,
+    borderColor: "#6b92ed",
   },
   textContainer:{
     margin: 15,
-    paddingHorizontal: 30,
+    justifyContent: "center",
   },
   userInfo: {
     fontSize: 18,
@@ -267,7 +279,7 @@ const styles = StyleSheet.create({
     
   },
   input: {
-    width: "80%",
+    width: "85%",
     height: 40,
     marginBottom: 10,
     paddingHorizontal: 10,
@@ -285,7 +297,12 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 10,
   },
+  changeGroup: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 30,
 
+  },
   personIcon: {
     alignItems: "center",
     justifyContent: "center",

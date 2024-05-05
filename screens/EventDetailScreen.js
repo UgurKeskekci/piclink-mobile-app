@@ -293,8 +293,6 @@ const EventDetailScreen = ({ route }) => {
         <View
           style={{
             height: 40,
-            borderBottomWidth: 1,
-            borderBottomColor: "black",
             backgroundColor: "rgba(36, 96, 253, 0.1)",
             display: "flex",
             flexDirection: "row",
@@ -427,9 +425,12 @@ const styles = StyleSheet.create({
   },
   separator: {
     borderBottomWidth: 1,
-    borderBottomColor: "black",
+    borderBottomColor: "rgba(0, 0, 0, 0.2)",
   },
-
+  separator2: {
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0, 0, 0, 0.2)",
+  },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -437,8 +438,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   gridItem: {
-    width: "31%", // Adjust width to accommodate 3 columns with spacing
-    marginBottom: 10, // Add margin bottom for spacing between rows
+    width: "33%", // Adjust width to accommodate 3 columns with spacing
+    marginBottom: 3, // Add margin bottom for spacing between rows
   },
   selectedImage: {
     width: "100%",
