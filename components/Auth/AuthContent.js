@@ -17,6 +17,7 @@ import FlatButton from "../ui/FlatButton";
 import AuthForm from "./AuthForm";
 import { Colors } from "../../constants/styles";
 import QRScanner from "../../screens/QRScanner"; // Import your QRScanner component
+import GuestScreen from "../../screens/GuestScreen";
 
 function AuthContent({ isLogin, onAuthenticate }) {
   const navigation = useNavigation();
@@ -102,7 +103,7 @@ function AuthContent({ isLogin, onAuthenticate }) {
   useEffect(() => {
     if (scannedEventId) {
       // Navigate to the EventDetailScreen within the current stack
-      navigation.navigate('EventDetail', { eventId: scannedEventId });
+      navigation.navigate('Guest', { eventId: scannedEventId });
       setExistingEventModalVisible(false);
     }
   }, [scannedEventId]);
