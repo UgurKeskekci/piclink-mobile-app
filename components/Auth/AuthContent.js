@@ -96,8 +96,15 @@ function AuthContent({ isLogin, onAuthenticate }) {
 
   const [scannedEventId, setScannedEventId] = useState(null);
 
+
+
+  const generateRandomUserId = () => {
+    return Math.random().toString(36).substring(2);
+  };
+
   function handleQRScanned(data) {
     setScannedEventId(data);
+   
   }
 
   useEffect(() => {

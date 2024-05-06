@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext  } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   StyleSheet,
   Text,
@@ -28,6 +28,7 @@ import {
   addDoc,
   setDoc,
   getDocs,
+  collectionGroup,
 } from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
@@ -47,60 +48,135 @@ import {
 
 const GuestScreen = ({ route }) => {
   const { eventId } = route.params; // Get eventId from route params
-
+  const userId = "xHEwt6Q7Q9diJoCCpfRdLgP9aIw1";
   const [eventData, setEventData] = useState(null); // State to store event data
   const [loading, setLoading] = useState(true); // State for loading indicator
+  const [events, setEvents] = useState([]);
+  const navigation = useNavigation();
 
-  
+ 
   useEffect(() => {
-    const fetchEventData = async () => {
-      try {
-        const eventRef = doc(db, "events", eventId); // Reference to the event document in Firebase
-        const eventSnap = await getDoc(eventRef); // Fetch the event document
-        if (eventSnap.exists()) {
-          const data = eventSnap.data(); // Extract data from the event document
-          setEventData(data); // Set event data to state
-        } else {
-          console.log("Event not found.");
+    addExistingEvent()
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      const fetchEvents = async () => {
+        try {
+          const eventsQuery = collection(db, `users/${userId}/events`);
+          const snapshot = await getDocs(eventsQuery);
+          const loadedEvents = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            eventId: doc.data().eventId, // Include eventId in the event data
+            name: doc.data().name,
+            ...doc.data(),
+          }));
+          setEvents(loadedEvents);
+        } catch (error) {
+          console.error("Error fetching events:", error);
         }
-        setLoading(false); // Set loading to false after data is fetched
-      } catch (error) {
-        console.error("Error fetching event data:", error);
-        setLoading(false); // Set loading to false in case of error
+      };
+      fetchEvents();
+    }
+  }, [userId]);
+
+  const addExistingEvent = async () => {
+    // Fetch the existing event
+    const eventsQuery = collectionGroup(db, "events");
+    const snapshot = await getDocs(eventsQuery);
+    const allEvents = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      userId: doc.ref.parent.parent.id, // Get the user ID
+      ...doc.data(),
+    }));
+  
+    // Find the matching event
+    const matchingEvent = allEvents.find((event) => event.id === eventId);
+    console.log("Matching Event Guest :", matchingEvent); // Add this log to check the value of matchingEvent
+    if (matchingEvent) {
+      // Fetch event data like name and description
+      const eventDoc = await getDoc(doc(db, `events/${matchingEvent.id}`));
+      if (eventDoc.exists()) {
+        const eventData = eventDoc.data();
+        console.log("Event Data:", eventData);
+  
+        // Now you can use eventData.name and eventData.description to display the event name and description
+        setEventData(eventData);
       }
+  
+      // Add the event to the current user's database with the same ID
+      const newDocRef = await setDoc(
+        doc(collection(db, `users/${userId}/events`), matchingEvent.id),
+        {
+          ...matchingEvent, // Include all properties of the existing event
+          // You can add additional properties here if needed
+        }
+      );
+      console.log("Event added with ID to guest:", newDocRef.id);
+  
+      // Fetch the photos subcollection from the existing event
+      const photosQuery = collection(
+        db,
+        `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`
+      );
+      const photosSnapshot = await getDocs(photosQuery);
+  
+      // Copy each document in the photos subcollection to the current user's database
+      const batch = writeBatch(db);
+      photosSnapshot.forEach((doc) => {
+        const newDocRef = doc(
+          collection(db, `users/${userId}/events/${matchingEvent.id}/photos`),
+          doc.id
+        );
+        // Include the document data when copying the photo
+        batch.set(newDocRef, doc.data());
+      });
+      await batch.commit();
+  
+      setAddEventError("");
+      toggleExistingEventModal();
+    } else {
+      setAddEventError("Event not found. Please enter a valid event ID.");
+    }
+  };
+  
+
+ 
+  const handleNavigateToEventDetails = (item) => {
+    // Replace 'eventId', 'eventName', 'eventDescription', and 'eventPhoto' with actual data
+    const eventData = {
+      eventId: item.id,
+      eventName: item.name,
+      eventDescription: item.description,
+      eventPhoto: item.profilePhoto,
     };
 
-    fetchEventData();
-  }, [eventId]);
-
-  if (loading) {
-    return <ActivityIndicator style={styles.container} size="large" />;
-  }
-
-  if (!eventData) {
-    return <Text>No event data available.</Text>;
-  }
-
+    navigation.navigate("GuestEventDetails", eventData);
+  };
 
 
 
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
-     
+
       <View style={styles.header}>
-        
         <View style={styles.imageContainer}>
-        <Image source={{ uri: eventData.photos[0].accessUrl }} style={styles.image} />
+          <Text>Event Photo</Text>
         </View>
         <View style={styles.eventDesc}>
-          <Text style={styles.title}>{eventData.name}</Text>
-          <Text style={styles.description}>{eventData.description}</Text>
+          {eventData ? (
+            <>
+              <Text style={styles.title}>{eventData.name}</Text>
+              <Text style={styles.description}>{eventData.description}</Text>
+            </>
+          ) : (
+            <ActivityIndicator size="large" color="blue" />
+          )}
         </View>
       </View>
-    
-       
-   
+
+
       {/* BUTTONS SECTION UNDER INFO PART */}
       <View style={styles.separator}>
         <View
@@ -180,7 +256,39 @@ const GuestScreen = ({ route }) => {
       </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
+ <FlatList
+          data={events}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          renderItem={({ item }) =>
+            item ? (
+              <TouchableOpacity
+                style={[
+                  styles.eventItem,
+                  { width: events.length > 1 ? "45%" : "95%" },
+                  { height: events.length > 1 ? 150 : 200 },
+                ]}
 
+                onPress={() => handleNavigateToEventDetails(item)}                  
+              >
+                <View style={styles.subheading}>
+                  <View style={styles.eventBoxTitle}>
+                    <Text>{item.name}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.eventBoxImage}>
+                  <Image
+                    source={{ uri: item.profilePhoto }}
+                    style={{ width: "100%", height: "100%", borderRadius: 20 }}
+                  />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View />
+            )
+          }
+        />
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>

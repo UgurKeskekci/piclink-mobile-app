@@ -12,6 +12,7 @@ import EventDetailScreen from "./screens/EventDetailScreen";
 import ProfilePage from "./screens/ProfilePage";
 import PhotoDetailScreen from "./screens/PhotoDetailsScreen";
 import GuestScreen from "./screens/GuestScreen";
+import GuestEventDetailsScreen from "./screens/GuestEventDetails";
 
 import { Colors } from "./constants/styles";
 import AuthContextProvider, { AuthContext } from "./store/auth-context";
@@ -31,6 +32,7 @@ function AuthStack() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="Guest" component={GuestScreen} />
+      <Stack.Screen name="GuestEventDetails" component={GuestEventDetailsScreen} />
     </Stack.Navigator>
   );
 }
