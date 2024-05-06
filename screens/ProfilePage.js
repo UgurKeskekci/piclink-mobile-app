@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { StyleSheet, Text, View, Alert, Button, TextInput, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import { AuthContext } from "../store/auth-context";
 import Icon from "react-native-vector-icons/Ionicons";
-import { getAuth } from "firebase/auth";
+import { getAuth, updatePassword } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from 'expo-image-picker';
 import { Entypo } from '@expo/vector-icons';
@@ -95,19 +95,27 @@ const ProfilePage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [repeatNewPassword, setRepeatNewPassword] = useState("");
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!changePasswordMode) {
       setChangePasswordMode(true);
     } else {
       if (newPassword !== repeatNewPassword) {
         Alert.alert("Error", "New password and repeat new password do not match.");
       } else {
-        console.log("New Password:", newPassword);
-        Alert.alert("Success", "Password changed successfully.");
-        setCurrentPassword("");
-        setNewPassword("");
-        setRepeatNewPassword("");
-        setChangePasswordMode(false);
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        try {
+          await updatePassword(user, newPassword);
+          Alert.alert("Success", "Password changed successfully.");
+          setCurrentPassword("");
+          setNewPassword("");
+          setRepeatNewPassword("");
+          setChangePasswordMode(false);
+        } catch (error) {
+          console.error("Error updating password:", error);
+          Alert.alert("Error", "Failed to update password. Please try again later.");
+        }
       }
     }
   };
@@ -189,27 +197,27 @@ const ProfilePage = () => {
         </View>
         {changePasswordMode && (
           <View style={styles.changeGroup}>
-            <TextInput
-              style={styles.input}
-              placeholder="Current Password"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="New Password"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Repeat New Password"
-              value={repeatNewPassword}
-              onChangeText={setRepeatNewPassword}
-              secureTextEntry
-            />
+           <TextInput
+          style={styles.input}
+          placeholder="Current Password"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          secureTextEntry
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="New Password"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Repeat New Password"
+            value={repeatNewPassword}
+            onChangeText={setRepeatNewPassword}
+            secureTextEntry
+          />
             <View style={styles.buttonGroup}>
               <Button title="Save" onPress={handleChangePassword} />
               <Button title="Cancel" onPress={handleCancelChangePassword} />
