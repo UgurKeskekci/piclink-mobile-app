@@ -11,7 +11,9 @@ import {
   Switch,
   Image,
   Platform,
-  Alert,ActivityIndicator,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -55,13 +57,25 @@ const EventDetailScreen = ({ route }) => {
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
   const [isEventDataAdded, setIsEventDataAdded] = useState(false);
   const [newPhotoCheck, setNewPhotoCheck] = useState(null);
-
+  const [isSortModalVisible, setSortModalVisible] = useState(false);
+  const [selectedSortOption, setSelectedSortOption] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // State for loading icon
 
   const goToHome = () => {
     navigation.navigate('Welcome');
   };
   
+  const handleSortOption = (option) => {
+    setSelectedSortOption(option);
+    setSortModalVisible(false);
+    // Call a function to apply the sort based on the selected option
+    // For example: applySort(option);
+  };
+
+  const applySort = (option) => {
+    // Logic to sort photos based on the selected option
+    // For example: sortPhotos(option);
+  };
   const syncNewPhotos = async () => {
     try {
       const storagePhotos = await fetchPhotosFromStorage(userId, eventId);
@@ -233,6 +247,8 @@ const handlePhotoSelection = async (selectedPhotos) => {
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
 
+      
+
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
         style={styles.triggerButton}
@@ -316,7 +332,41 @@ const handlePhotoSelection = async (selectedPhotos) => {
     </Text>
   </View>
 </View>
-
+<Modal
+        animationType="slide"
+        transparent={true}
+        visible={isSortModalVisible}
+        onRequestClose={() => setSortModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setSortModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.sortOption}
+              onPress={() => handleSortOption("lastAdded")}
+            >
+              <Text>Last Added Date</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.sortOption}
+              onPress={() => handleSortOption("firstAdded")}
+            >
+              <Text>First Added Date</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.sortOption}
+              onPress={() => handleSortOption("custom")}
+            >
+              <Text>Custom Sorting</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
 
       {/* BUTTONS SECTION UNDER INFO PART */}
@@ -371,17 +421,23 @@ const handlePhotoSelection = async (selectedPhotos) => {
             <Text style={{ paddingRight: 40 }}>Search</Text>
           </View>
 
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+
+
+          <TouchableOpacity
+          style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
+            onPress={() => setSortModalVisible(true)}
           >
-            <Icon
-              name="funnel-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Sort</Text>
-          </View>
+        <View style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}>
+          <Icon
+            name="funnel-outline"
+            size={15}
+            color="black"
+            style={{ paddingRight: 2 }}
+          />
+          <Text style={{ paddingRight: 20 }}>Sort</Text>
+        </View>
+      </TouchableOpacity>
+
 
           <View
             style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
@@ -397,35 +453,36 @@ const handlePhotoSelection = async (selectedPhotos) => {
         </View>
       </View>
 
+      <ScrollView>
       {/* GRID LAYOUT FOR PHOTOS */}
-       {/* Other components */}
-       {isLoading ? ( // Conditionally render loading icon
+      {isLoading ? (
         <ActivityIndicator size="large" color="blue" />
       ) : (
-      <View style={styles.gridContainer}>
-        {gridImages.map((imageData, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => {
-              navigation.navigate("PhotoDetail", {
-                photoUri: imageData.accessUrl,
-                photoName: "Username",
-                photoDescription: "Example Description",
-                eventId: eventId,
-                userId: userId,
-                photoId: imageData.photoId,
-              });
-            }}
-            style={styles.gridItem}
-          >
-            <Image
-              source={{ uri: imageData.accessUrl }}
-              style={styles.selectedImage}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-)}
+        <View style={[styles.gridContainer, { marginBottom: "30%" }]}>
+          {gridImages.map((imageData, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                navigation.navigate("PhotoDetail", {
+                  photoUri: imageData.accessUrl,
+                  photoName: "Username",
+                  photoDescription: "Example Description",
+                  eventId: eventId,
+                  userId: userId,
+                  photoId: imageData.photoId,
+                });
+              }}
+              style={styles.gridItem}
+            >
+              <Image
+                source={{ uri: imageData.accessUrl }}
+                style={styles.selectedImage}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </ScrollView>
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
         <TouchableOpacity style={styles.navButton}>
