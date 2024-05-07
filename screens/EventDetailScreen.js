@@ -63,7 +63,7 @@ const EventDetailScreen = ({ route }) => {
   const [isSortModalVisible, setSortModalVisible] = useState(false);
   const [selectedSortOption, setSelectedSortOption] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // State for loading icon
-  const POLLING_INTERVAL = 10000000000;
+  //const POLLING_INTERVAL = 1000000002222222222222200;
 
   const goToHome = () => {
     navigation.navigate('Welcome');
@@ -112,12 +112,7 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   
-  useEffect(() => {
-    const intervalId = setInterval(syncNewPhotos, POLLING_INTERVAL);
-
-    // Clean up function to clear the interval when component unmounts
-    return () => clearInterval(intervalId);
-  }, []);
+  
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
     const fetchAndLogUid = async () => {
