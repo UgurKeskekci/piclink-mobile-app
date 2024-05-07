@@ -63,7 +63,7 @@ const EventDetailScreen = ({ route }) => {
   const [isSortModalVisible, setSortModalVisible] = useState(false);
   const [selectedSortOption, setSelectedSortOption] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // State for loading icon
-  const POLLING_INTERVAL = 2000;
+  const POLLING_INTERVAL = 10000000000;
 
   const goToHome = () => {
     navigation.navigate('Welcome');
