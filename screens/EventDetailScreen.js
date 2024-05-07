@@ -110,7 +110,6 @@ const EventDetailScreen = ({ route }) => {
     syncNewPhotos();
   }, []);
   
-  
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
     const fetchAndLogUid = async () => {
