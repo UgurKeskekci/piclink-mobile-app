@@ -11,7 +11,8 @@ import {
   Switch,
   Image,
   Platform,
-  Alert,ActivityIndicator,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -19,7 +20,15 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import QRCode from "react-native-qrcode-svg"; // Import QRCode
 import { db, storage } from "../config";
-import { doc, updateDoc, getDoc, collection, addDoc, setDoc, getDocs } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  collection,
+  addDoc,
+  setDoc,
+  getDocs,
+} from "firebase/firestore";
 import * as FileSystem from "expo-file-system"; // Import FileSystem from expo-file-system
 import { Linking } from "react-native";
 import * as MediaLibrary from "expo-media-library";
@@ -29,22 +38,24 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { fetchPhotosFromFirebase, fetchPhotosFromStorage, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
+import {
+  fetchPhotosFromFirebase,
+  fetchPhotosFromStorage,
+  storePhotosInFirestore,
+  uploadPhotoToStorage,
+} from "./FirebaseUtils";
 
-
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["Warning: ..."]); // Ignore log notification by message
 LogBox.ignoreAllLogs();
 const GuestEventDetailsScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;
-  console.log(eventId)
-  console.log(eventDescription)
+  console.log(eventId);
+  console.log(eventDescription);
   const eventIdString = eventId.toString();
   console.log(eventIdString);
   const navigation = useNavigation();
-
-
 
   // State variables
   const [userId, setUserId] = useState(null); // Replace 'user_id' with actual user ID
@@ -57,17 +68,23 @@ const GuestEventDetailsScreen = ({ route }) => {
   const [copySuccessMessage, setCopySuccessMessage] = useState("");
   const [isEventDataAdded, setIsEventDataAdded] = useState(false);
   const [newPhotoCheck, setNewPhotoCheck] = useState(null);
-
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // State for loading icon
+  const handleSignUpModal = () => {
+    setShowSignUpModal(true);
+  };
 
   const goToHome = () => {
-    navigation.navigate('Welcome');
+    navigation.navigate("Welcome");
   };
-  
+
   const syncNewPhotos = async () => {
     try {
       const storagePhotos = await fetchPhotosFromStorage(userId, eventId);
-      const photosCollectionRef = collection(db, `users/${userId}/events/${eventId}/photos`);
+      const photosCollectionRef = collection(
+        db,
+        `users/${userId}/events/${eventId}/photos`
+      );
       const batch = db.batch();
       const existingPhotoIds = new Set(); // Track existing photo IDs
       // Get existing photo IDs
@@ -89,7 +106,7 @@ const GuestEventDetailsScreen = ({ route }) => {
       console.error("Error syncing new photos:", error);
     }
   };
-  
+
   useEffect(() => {
     // Call the function when component mounts
     syncNewPhotos();
@@ -110,8 +127,6 @@ const GuestEventDetailsScreen = ({ route }) => {
     fetchAndLogUid();
   }, []);
 
-  
-  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -120,12 +135,15 @@ const GuestEventDetailsScreen = ({ route }) => {
           setUserId(uid);
         }
         setIsLoading(true); // Set loading state to true when fetching data
-  
+
         // Check if the /photos/ subcollection exists for the event
-        const photosCollectionRef = collection(db, `users/${userId}/events/${eventId}/photos`);
+        const photosCollectionRef = collection(
+          db,
+          `users/${userId}/events/${eventId}/photos`
+        );
         const photosQuerySnapshot = await getDocs(photosCollectionRef);
         const photosExist = !photosQuerySnapshot.empty;
-  
+
         if (!photosExist) {
           // If no photos exist in the /photos/ subcollection, fetch from Firebase Storage
           const storagePhotos = await fetchPhotosFromStorage(userId, eventId);
@@ -142,7 +160,7 @@ const GuestEventDetailsScreen = ({ route }) => {
           const photos = await fetchPhotosFromFirebase(userId, eventId);
           setGridImages(photos);
         }
-        
+
         setIsLoading(false); // Set loading state to false when photos are loaded
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -150,9 +168,6 @@ const GuestEventDetailsScreen = ({ route }) => {
     };
     fetchData();
   }, [userId, eventId]);
-  
-  
-
 
   // Navigate to profile screen
   const goToProfile = () => {
@@ -190,24 +205,26 @@ const GuestEventDetailsScreen = ({ route }) => {
     }
   };
 
- // In your handlePhotoSelection function where you upload photos to Storage and Firestore
-const handlePhotoSelection = async (selectedPhotos) => {
-  try {
-    const photoData = await Promise.all(selectedPhotos.map((photoUri) => uploadPhotoToStorage(photoUri, eventId, userId)));
-    await storePhotosInFirestore(userId, eventId, photoData);
-    // Fetch photos again to update state
-    const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
-    setGridImages(updatedPhotos);
-  } catch (error) {
-    console.error("Error handling photo selection:", error);
-  }
-};
+  // In your handlePhotoSelection function where you upload photos to Storage and Firestore
+  const handlePhotoSelection = async (selectedPhotos) => {
+    try {
+      const photoData = await Promise.all(
+        selectedPhotos.map((photoUri) =>
+          uploadPhotoToStorage(photoUri, eventId, userId)
+        )
+      );
+      await storePhotosInFirestore(userId, eventId, photoData);
+      // Fetch photos again to update state
+      const updatedPhotos = await fetchPhotosFromFirebase(userId, eventId);
+      setGridImages(updatedPhotos);
+    } catch (error) {
+      console.error("Error handling photo selection:", error);
+    }
+  };
 
-// Function to fetch new photos from Storage and sync with Firestore
+  // Function to fetch new photos from Storage and sync with Firestore
 
-
-// Call syncNewPhotos whenever necessary, such as after a new photo is uploaded
-
+  // Call syncNewPhotos whenever necessary, such as after a new photo is uploaded
 
   const createQRCode = () => {
     const qrData = eventId;
@@ -228,9 +245,6 @@ const handlePhotoSelection = async (selectedPhotos) => {
     setModalVisible(false); // Close the "Share" modal
   };
 
-
-
-  
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
@@ -242,84 +256,26 @@ const handlePhotoSelection = async (selectedPhotos) => {
         <Text style={styles.triggerButtonText}>Share</Text>
       </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            {/* Updated onPress event handlers */}
-            <Button title="Create QR" onPress={createQRCode} />
-            <Button title="Copy Invitation" onPress={copyInvitation} />
-            {/* Close Button */}
-            {/* Close Button as "X" */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       {/* Display QR code in a separate pop-up */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={generatedQRCode !== null} // Show modal only when QR code is generated
-        onRequestClose={() => setGeneratedQRCode(null)} // Close modal when QR code is dismissed
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.QRModalView}>
-            {/* Display generated QR code */}
-            {generatedQRCode && <QRCode value={generatedQRCode} size={230} />}
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setGeneratedQRCode(null)} // Close the QR code pop-up
-            >
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isCopyLinkModalVisible}
-        onRequestClose={() => setCopyLinkModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.invitationModalView}>
-            <Text>Invitation Link: https://example.com/event</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setCopyLinkModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      
       <View style={styles.header}>
-  <View style={styles.imageContainer}>
-    <Image source={{ uri: eventPhoto }} style={styles.image} />
-  </View>
-  <View style={styles.eventDesc}>
-    <Text style={styles.title}>
-      {eventName.length > 18 ? `${eventName.substring(0, 18)}...` : eventName}
-    </Text>
-    <Text style={styles.description}>
-    {eventDescription && eventDescription.length > 50 ? `${eventDescription.substring(0, 50)}...` : eventDescription}
-    </Text>
-  </View>
-</View>
-
-
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: eventPhoto }} style={styles.image} />
+        </View>
+        <View style={styles.eventDesc}>
+          <Text style={styles.title}>
+            {eventName.length > 18
+              ? `${eventName.substring(0, 18)}...`
+              : eventName}
+          </Text>
+          <Text style={styles.description}>
+            {eventDescription && eventDescription.length > 50
+              ? `${eventDescription.substring(0, 50)}...`
+              : eventDescription}
+          </Text>
+        </View>
+      </View>
 
       {/* BUTTONS SECTION UNDER INFO PART */}
       <View style={styles.separator}>
@@ -350,96 +306,75 @@ const handlePhotoSelection = async (selectedPhotos) => {
         </View>
       </View>
 
-      <View style={styles.separator2}>
-        <View
-          style={{
-            height: 40,
-            backgroundColor: "rgba(36, 96, 253, 0.1)",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="search-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2, paddingLeft: 10 }}
-            />
-            <Text style={{ paddingRight: 40 }}>Search</Text>
-          </View>
-
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="funnel-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Sort</Text>
-          </View>
-
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="download-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Download</Text>
-          </View>
-        </View>
-      </View>
-
+      
       {/* GRID LAYOUT FOR PHOTOS */}
-       {/* Other components */}
-       {isLoading ? ( // Conditionally render loading icon
+      {/* Other components */}
+      {isLoading ? ( // Conditionally render loading icon
         <ActivityIndicator size="large" color="blue" />
       ) : (
-      <View style={styles.gridContainer}>
-        {gridImages.map((imageData, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => {
-              navigation.navigate("PhotoDetail", {
-                photoUri: imageData.accessUrl,
-                photoName: "Username",
-                photoDescription: "Example Description",
-                eventId: eventId,
-                userId: userId,
-                photoId: imageData.photoId,
-              });
-            }}
-            style={styles.gridItem}
-          >
-            <Image
-              source={{ uri: imageData.accessUrl }}
-              style={styles.selectedImage}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-)}
+        <View style={styles.gridContainer}>
+          {gridImages.map((imageData, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                navigation.navigate("PhotoDetail", {
+                  photoUri: imageData.accessUrl,
+                  photoName: "Username",
+                  photoDescription: "Example Description",
+                  eventId: eventId,
+                  userId: userId,
+                  photoId: imageData.photoId,
+                });
+              }}
+              style={styles.gridItem}
+            >
+              <Image
+                source={{ uri: imageData.accessUrl }}
+                style={styles.selectedImage}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+<Modal
+        animationType="fade"
+        transparent={true}
+        visible={showSignUpModal}
+        onRequestClose={() => {
+          setShowSignUpModal(false);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Please sign-up for more...</Text>
+            <Text
+              style={styles.signupText}
+              onPress={() => navigation.navigate("Signup")}
+            >
+              Sign Up
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowSignUpModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
-        <TouchableOpacity style={styles.navButton}>
-          <Entypo name="home" size={35} color="white" onPress={goToHome} />
+        <TouchableOpacity style={styles.navButton} onPress={handleSignUpModal}>
+          <Entypo name="home" size={35} color="white" />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.navButton, styles.circleButton]}
-          onPress={pickImage}
+          onPress={handleSignUpModal}
         >
           <AntDesign name="pluscircleo" size={55} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
+        <TouchableOpacity style={styles.navButton} onPress={handleSignUpModal}>
           <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>
@@ -653,6 +588,24 @@ const styles = StyleSheet.create({
     color: "blue",
     fontSize: 24,
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    marginBottom: 60, // Adjust to position above the bottom navigation bar
+  },
+  signupText:{
+    color:"blue",
+    fontWeight:"700"
+  },
+
 });
 
 export default GuestEventDetailsScreen;

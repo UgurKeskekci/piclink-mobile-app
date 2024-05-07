@@ -11,9 +11,10 @@ import {
   Switch,
   Image,
   Platform,
-  Alert,
+  Alert, // Import Alert
   ActivityIndicator,
 } from "react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -45,9 +46,6 @@ import {
   storePhotosInFirestore,
   uploadPhotoToStorage,
 } from "./FirebaseUtils";
-import { LogBox } from 'react-native';
-LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
-LogBox.ignoreAllLogs();
 
 const GuestScreen = ({ route }) => {
   const { eventId } = route.params; // Get eventId from route params
@@ -56,32 +54,49 @@ const GuestScreen = ({ route }) => {
   const [loading, setLoading] = useState(true); // State for loading indicator
   const [events, setEvents] = useState([]);
   const navigation = useNavigation();
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
 
- 
+  const handleSignUpModal = () => {
+    setShowSignUpModal(true);
+  };
+
   useEffect(() => {
-    addExistingEvent()
+    addExistingEvent();
   }, []);
 
   useEffect(() => {
-    if (userId) {
-      const fetchEvents = async () => {
-        try {
-          const eventsQuery = collection(db, `users/${userId}/events`);
-          const snapshot = await getDocs(eventsQuery);
-          const loadedEvents = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            eventId: doc.data().eventId, // Include eventId in the event data
-            name: doc.data().name,
-            ...doc.data(),
-          }));
-          setEvents(loadedEvents);
-        } catch (error) {
-          console.error("Error fetching events:", error);
-        }
-      };
-      fetchEvents();
+    const fetchEvents = async () => {
+      try {
+        const eventsQuery = collection(db, `users/${userId}/events`);
+        const snapshot = await getDocs(eventsQuery);
+        const loadedEvents = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          eventId: doc.data().eventId, // Include eventId in the event data
+          name: doc.data().name,
+          ...doc.data(),
+        }));
+        setEvents(loadedEvents);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const eventsQuery = collection(db, `users/${userId}/events`);
+      const snapshot = await getDocs(eventsQuery);
+      const loadedEvents = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name,
+        ...doc.data(),
+      }));
+      setEvents(loadedEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error);
     }
-  }, [userId]);
+  };
 
   const addExistingEvent = async () => {
     // Fetch the existing event
@@ -92,7 +107,7 @@ const GuestScreen = ({ route }) => {
       userId: doc.ref.parent.parent.id, // Get the user ID
       ...doc.data(),
     }));
-  
+
     // Find the matching event
     const matchingEvent = allEvents.find((event) => event.id === eventId);
     console.log("Matching Event Guest :", matchingEvent); // Add this log to check the value of matchingEvent
@@ -102,11 +117,11 @@ const GuestScreen = ({ route }) => {
       if (eventDoc.exists()) {
         const eventData = eventDoc.data();
         console.log("Event Data:", eventData);
-  
+
         // Now you can use eventData.name and eventData.description to display the event name and description
         setEventData(eventData);
       }
-  
+
       // Add the event to the current user's database with the same ID
       const newDocRef = await setDoc(
         doc(collection(db, `users/${userId}/events`), matchingEvent.id),
@@ -115,15 +130,17 @@ const GuestScreen = ({ route }) => {
           // You can add additional properties here if needed
         }
       );
+
+      fetchEvents();
       console.log("Event added with ID to guest:", newDocRef.id);
-  
+
       // Fetch the photos subcollection from the existing event
       const photosQuery = collection(
         db,
         `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`
       );
       const photosSnapshot = await getDocs(photosQuery);
-  
+
       // Copy each document in the photos subcollection to the current user's database
       const batch = writeBatch(db);
       photosSnapshot.forEach((doc) => {
@@ -135,16 +152,14 @@ const GuestScreen = ({ route }) => {
         batch.set(newDocRef, doc.data());
       });
       await batch.commit();
-  
+      fetchEvents();
       setAddEventError("");
       toggleExistingEventModal();
     } else {
       setAddEventError("Event not found. Please enter a valid event ID.");
     }
   };
-  
 
- 
   const handleNavigateToEventDetails = (item) => {
     // Replace 'eventId', 'eventName', 'eventDescription', and 'eventPhoto' with actual data
     const eventData = {
@@ -157,150 +172,88 @@ const GuestScreen = ({ route }) => {
     navigation.navigate("GuestEventDetails", eventData);
   };
 
-
-
   return (
     <View style={styles.container}>
       {/* INFO PART TITLE DESCRIPTION PHOTO ETC. */}
 
       <View style={styles.header}>
         <View style={styles.imageContainer}>
-          <Text>Event Photo</Text>
-        </View>
-        <View style={styles.eventDesc}>
-          {eventData ? (
-            <>
-              <Text style={styles.title}>{eventData.name}</Text>
-              <Text style={styles.description}>{eventData.description}</Text>
-            </>
-          ) : (
-            <ActivityIndicator size="large" color="blue" />
-          )}
-        </View>
-      </View>
-
-
-      {/* BUTTONS SECTION UNDER INFO PART */}
-      <View style={styles.separator}>
-        <View
-          style={{
-            height: 60,
-            borderBottomColor: "black",
-            backgroundColor: "rgba(36, 96, 253, 0.30)",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Icon
-            name="grid-outline"
-            size={35}
-            color="black"
-            style={{ paddingLeft: 30 }}
-          />
-          <Icon name="folder-outline" size={35} color="black" />
-          <Icon
-            name="pricetag-outline"
-            size={35}
-            color="black"
-            style={{ paddingRight: 30 }}
-          />
-        </View>
-      </View>
-
-      <View style={styles.separator2}>
-        <View
-          style={{
-            height: 40,
-            backgroundColor: "rgba(36, 96, 253, 0.1)",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="search-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2, paddingLeft: 10 }}
-            />
-            <Text style={{ paddingRight: 40 }}>Search</Text>
-          </View>
-
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="funnel-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Sort</Text>
-          </View>
-
-          <View
-            style={{ flex: 1, flexDirection: "row", justifyContent: "center" }}
-          >
-            <Icon
-              name="download-outline"
-              size={15}
-              color="black"
-              style={{ paddingRight: 2 }}
-            />
-            <Text style={{ paddingRight: 20 }}>Download</Text>
-          </View>
+          <Text style={styles.imageContainerText}>Welcome to Piclink!</Text>
         </View>
       </View>
 
       {/* GRID LAYOUT FOR PHOTOS */}
- <FlatList
-          data={events}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          renderItem={({ item }) =>
-            item ? (
-              <TouchableOpacity
-                style={[
-                  styles.eventItem,
-                  { width: events.length > 1 ? "45%" : "95%" },
-                  { height: events.length > 1 ? 150 : 200 },
-                ]}
-
-                onPress={() => handleNavigateToEventDetails(item)}                  
-              >
-                <View style={styles.subheading}>
-                  <View style={styles.eventBoxTitle}>
-                    <Text>{item.name}</Text>
-                  </View>
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        renderItem={({ item }) =>
+          item ? (
+            <TouchableOpacity
+              style={[
+                styles.eventItem,
+                { width: events.length > 1 ? "45%" : "95%" },
+                { height: events.length > 1 ? 150 : 200 },
+              ]}
+              onPress={() => handleNavigateToEventDetails(item)}
+            >
+              <View style={styles.subheading}>
+                <View style={styles.eventBoxTitle}>
+                  <Text>{item.name}</Text>
                 </View>
+              </View>
 
-                <View style={styles.eventBoxImage}>
-                  <Image
-                    source={{ uri: item.profilePhoto }}
-                    style={{ width: "100%", height: "100%", borderRadius: 20 }}
-                  />
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <View />
-            )
-          }
-        />
+              <View style={styles.eventBoxImage}>
+                <Image
+                  source={{ uri: item.profilePhoto }}
+                  style={{ width: "100%", height: "100%", borderRadius: 20 }}
+                />
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View />
+          )
+        }
+      />
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showSignUpModal}
+        onRequestClose={() => {
+          setShowSignUpModal(false);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>Please sign-up for more...</Text>
+            <Text
+              style={styles.signupText}
+              onPress={() => navigation.navigate("Signup")}
+            >
+              Sign Up
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowSignUpModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Bottom Navigation Bar */}
       <View style={styles.bottomNavBar}>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={handleSignUpModal}>
           <Entypo name="home" size={35} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.navButton, styles.circleButton]}>
+        <TouchableOpacity
+          style={[styles.navButton, styles.circleButton]}
+          onPress={handleSignUpModal}
+        >
           <AntDesign name="pluscircleo" size={55} color="white" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
+        <TouchableOpacity style={styles.navButton} onPress={handleSignUpModal}>
           <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>
@@ -317,10 +270,18 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     margin: 10,
-    height: 150,
+    height: 50,
+   
   },
   imageContainer: {
     justifyContent: "center",
+
+  },
+  imageContainerText:{
+    justifyContent: "center",
+    fontSize:"26px",
+    
+
   },
   image: {
     width: 90,
@@ -335,6 +296,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "center",
     paddingLeft: 30,
+  },
+  signupText:{
+    color:"blue",
+    fontWeight:"700"
   },
   title: {
     width: 200,
@@ -419,7 +384,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    width: "80%",
+    width: "60%",
   },
   input: {
     borderWidth: 1,
@@ -506,13 +471,62 @@ const styles = StyleSheet.create({
   closeButton: {
     position: "absolute",
     top: 10,
-    right: 10,
+    right: 20,
     backgroundColor: "transparent",
-    padding: 8,
+    padding: 17,
   },
   closeButtonText: {
     color: "blue",
-    fontSize: 24,
+    fontSize: 14,
+  },
+  eventItem: {
+    width: "45%",
+    height: 150,
+    borderWidth: 1,
+    borderColor: "#cbd7f3",
+    borderRadius: 20,
+    marginBottom: 8,
+    margin: "2.5%",
+    backgroundColor: "rgba(224, 174, 208, 0)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  subheading: {
+    position: "absolute", // Resmin üzerine yerleştirin
+    width: "100%", // Resmin genişliğine eşit olacak şekilde ayarlayın
+    height: 33,
+    bottom: 0, // En altta olacak şekilde pozisyonlandırın
+    backgroundColor: "#cbd7f3",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    paddingHorizontal: 12, // İçeriğe boşluk bırakmak için yanal dolguyu ayarlayın
+    paddingVertical: 8, // İçeriğe boşluk bırakmak için dikey dolguyu ayarlayın
+  },
+  eventBoxTitle: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  eventBoxImage: {
+    position: "relative", // Subheading'in altında olmasını sağlamak için
+    flex: 1, // Resmi genişletmek için flex kullanın
+    width: "100%", // Set width to fill parent container
+    height: "100%", // Set height to fill parent container
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: -1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    marginBottom: 60, // Adjust to position above the bottom navigation bar
   },
 });
 

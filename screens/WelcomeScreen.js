@@ -319,7 +319,7 @@ function WelcomeScreen() {
     );
     console.log("Matching Event:", matchingEvent); // Add this log to check the value of matchingEvent
     if (matchingEvent) {
-       console.log("We can go inside if on matchinEvent condition:");
+       console.log("We can go inside if on matchin:");
       // Add the event to the current user's database with the same ID
       const newDocRef = await setDoc(
         doc(collection(db, `users/${userId}/events`), matchingEvent.id),
@@ -328,8 +328,7 @@ function WelcomeScreen() {
           // You can add additional properties here if needed
         }
       );
-
-      fetchEvents();
+      setIsLoading(true);
       console.log("Event added with ID:", newDocRef.id);
 
       // Fetch the photos subcollection from the existing event
@@ -363,8 +362,6 @@ function WelcomeScreen() {
       setAddEventError("Event not found. Please enter a valid event ID.");
     }
   };
-
-  
 
   const handleQRScanned = (data) => {
     setExistingEventInput(data); // Update existingEventInput with the scanned data

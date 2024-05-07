@@ -23,7 +23,7 @@ const PhotoDetailScreen = ({ route }) => {
   const [comments, setComments] = useState([]);
   const [likeNumber, setLikeNumber] = useState(0);
   const [showAllComments, setShowAllComments] = useState(false);
-const [showCommentInput, setShowCommentInput] = useState(true); // Change to true
+  const [showCommentInput, setShowCommentInput] = useState(true); // Change to true
 
   // Function to handle adding a comment
   const addComment = async () => {
