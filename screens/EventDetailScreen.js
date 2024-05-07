@@ -107,6 +107,10 @@ const EventDetailScreen = ({ route }) => {
       console.error("Error syncing new photos:", error);
     }
   };
+  useEffect(() => {
+    // Call the function when component mounts
+    syncNewPhotos();
+  }, []);
   
   useEffect(() => {
     // Call the function when component mounts
