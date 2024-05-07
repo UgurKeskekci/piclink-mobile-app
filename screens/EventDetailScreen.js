@@ -68,6 +68,8 @@ const EventDetailScreen = ({ route }) => {
   const goToHome = () => {
     navigation.navigate('Welcome');
   };
+
+ 
   
   const handleSortOption = (option) => {
     setSelectedSortOption(option);
@@ -89,13 +91,7 @@ const EventDetailScreen = ({ route }) => {
       // Get existing photo IDs
       const photosQuerySnapshot = await getDocs(photosCollectionRef);
       photosQuerySnapshot.forEach((doc) => {
-        if (doc.exists && Object.keys(doc.data()).length === 0) {
-          // If the document exists but has no fields, delete it
-          batch.delete(doc.ref);
-        } else {
-          // Otherwise, add its ID to the set of existing IDs
-          existingPhotoIds.add(doc.id);
-        }
+        existingPhotoIds.add(doc.id);
       });
       // Add new photos to batch only if their IDs don't exist in Firestore
       storagePhotos.forEach((photo) => {
@@ -112,6 +108,10 @@ const EventDetailScreen = ({ route }) => {
     }
   };
   
+  useEffect(() => {
+    // Call the function when component mounts
+    syncNewPhotos();
+  }, []);
   
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
