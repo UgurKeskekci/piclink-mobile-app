@@ -179,14 +179,8 @@ const ProfilePage = () => {
       </TouchableOpacity>
       <View style={styles.textContainer}>
         
-        <Text style={styles.username}><Image
-      source={require('/Users/nursudevar/Desktop/piclink-latest/piclink-mobile-app/components/ui/icons8-person-64.png')}
-      style={{ width: 16, height: 16}} // Adjust the width and height as needed
-    /> : {username}</Text>
-        <Text style={styles.userInfo}><Image
-      source={require('/Users/nursudevar/Desktop/piclink-latest/piclink-mobile-app/components/ui/icons8-mail-24.png')}
-      style={{ width: 16, height: 16}} // Adjust the width and height as needed
-    /> : {userEmail}</Text>
+        <Text style={styles.username}><Icon name="person-outline" size={20} /> : {username}</Text>
+        <Text style={styles.userInfo}><Icon name="mail-outline" size={20} /> : {userEmail}</Text>
       </View>
       </View>
       <View style={styles.inputContainer}>
