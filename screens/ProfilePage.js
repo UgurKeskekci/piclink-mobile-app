@@ -9,6 +9,9 @@ import { Entypo } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from '@expo/vector-icons';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 const ProfilePage = () => {
   const authCtx = useContext(AuthContext);
@@ -236,7 +239,7 @@ const ProfilePage = () => {
         >
           {/* Add icon here if needed */}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
+        <TouchableOpacity style={styles.navButton} onPress={goToProfile} disabled>
           <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>

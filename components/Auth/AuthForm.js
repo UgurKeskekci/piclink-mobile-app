@@ -3,6 +3,9 @@ import { StyleSheet, View } from 'react-native';
 
 import Button from '../ui/Button';
 import Input from './Input';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 function AuthForm({ isLogin, onSubmit, credentialsInvalid }) {
   const [enteredEmail, setEnteredEmail] = useState('');

@@ -9,6 +9,9 @@ import { AuthContext } from '../store/auth-context';
 import { createUser } from '../util/auth';
 import { firebase } from '../config';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 const EMAIL_VERIFICATION_TIMEOUT = 60 * 1000;
 

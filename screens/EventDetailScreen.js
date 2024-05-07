@@ -32,8 +32,11 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { fetchPhotosFromFirebase, fetchPhotosFromStorage, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
+import * as Clipboard from 'expo-clipboard';
 
-
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 const EventDetailScreen = ({ route }) => {
   // Destructure route parameters
@@ -60,6 +63,7 @@ const EventDetailScreen = ({ route }) => {
   const [isSortModalVisible, setSortModalVisible] = useState(false);
   const [selectedSortOption, setSelectedSortOption] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // State for loading icon
+  //const POLLING_INTERVAL = 1000000002222222222222200;
 
   const goToHome = () => {
     navigation.navigate('Welcome');
@@ -101,11 +105,11 @@ const EventDetailScreen = ({ route }) => {
       console.error("Error syncing new photos:", error);
     }
   };
-  
   useEffect(() => {
     // Call the function when component mounts
     syncNewPhotos();
   }, []);
+  
   // Fetch and log user ID from AsyncStorage
   useEffect(() => {
     const fetchAndLogUid = async () => {
@@ -227,9 +231,17 @@ const handlePhotoSelection = async (selectedPhotos) => {
     setModalVisible(false);
   };
 
+  const copyToClipboard = async () => {
+    const invitationLink = eventId;
+
+    await Clipboard.setStringAsync(eventId);
+    setCopyLinkModalVisible(true); // You might want to reconsider this modal if you're redirecting right away
+    setModalVisible(false); // Close the "Share" modal
+  };
+
   const copyInvitation = () => {
-    const invitationLink = "https://example.com/event";
-    console.log("Invitation link copied:", invitationLink);
+    const invitationLink = eventId;
+    console.log("Invitation link copied:", eventId);
 
     // Attempt to open the URL
     Linking.openURL(invitationLink).catch((err) => {
@@ -266,7 +278,7 @@ const handlePhotoSelection = async (selectedPhotos) => {
           <View style={styles.modalView}>
             {/* Updated onPress event handlers */}
             <Button title="Create QR" onPress={createQRCode} />
-            <Button title="Copy Invitation" onPress={copyInvitation} />
+            <Button title="Copy Invitation" onPress={copyToClipboard} />
             {/* Close Button */}
             {/* Close Button as "X" */}
             <TouchableOpacity
@@ -309,7 +321,7 @@ const handlePhotoSelection = async (selectedPhotos) => {
       >
         <View style={styles.centeredView}>
           <View style={styles.invitationModalView}>
-            <Text>Invitation Link: https://example.com/event</Text>
+            <Text>Event Id Copied to clipboard!</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setCopyLinkModalVisible(false)}
@@ -456,7 +468,7 @@ const handlePhotoSelection = async (selectedPhotos) => {
       <ScrollView>
       {/* GRID LAYOUT FOR PHOTOS */}
       {isLoading ? (
-        <ActivityIndicator size="large" color="blue" />
+        <ActivityIndicator size="large" color="blue" style={ marginTop="50px"}/>
       ) : (
         <View style={[styles.gridContainer, { marginBottom: "30%" }]}>
           {gridImages.map((imageData, index) => (

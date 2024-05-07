@@ -13,11 +13,15 @@ import {
   Keyboard,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { db } from "../../config";
 import FlatButton from "../ui/FlatButton";
 import AuthForm from "./AuthForm";
 import { Colors } from "../../constants/styles";
 import QRScanner from "../../screens/QRScanner"; // Import your QRScanner component
 import GuestScreen from "../../screens/GuestScreen";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 function AuthContent({ isLogin, onAuthenticate }) {
   const navigation = useNavigation();
@@ -28,7 +32,34 @@ function AuthContent({ isLogin, onAuthenticate }) {
     confirmEmail: false,
     confirmPassword: false,
   });
-
+  function handleRemoveEvents() {
+    // Assuming you have the user ID stored in a variable
+    const userId = "xHEwt6Q7Q9diJoCCpfRdLgP9aIw1";
+    
+    // Reference to the events under the specific user
+    const eventsRef = db.collection(`/users/${userId}/events`);
+    
+    // Get all documents under the events collection
+    eventsRef.get()
+      .then(querySnapshot => {
+        // Iterate through each document
+        querySnapshot.forEach(doc => {
+          // Delete the document
+          doc.ref.delete()
+            .then(() => {
+              console.log("Event deleted successfully");
+            })
+            .catch(error => {
+              console.error("Error deleting event:", error);
+              // Handle error if needed
+            });
+        });
+      })
+      .catch(error => {
+        console.error("Error getting documents:", error);
+        // Handle error if needed
+      });
+  }
   function switchAuthModeHandler() {
     if (isLogin) {
       navigation.replace("Signup");
@@ -91,6 +122,7 @@ function AuthContent({ isLogin, onAuthenticate }) {
     setModalVisible(!isModalVisible);
   };
   const toggleExistingEventModal = () => {
+    handleRemoveEvents();
     setExistingEventModalVisible(!isExistingEventModalVisible);
   };
 

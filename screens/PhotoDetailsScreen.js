@@ -10,6 +10,9 @@ import {
 import { db } from "../config"; // Import your Firebase Firestore configuration
 import Icon from "react-native-vector-icons/Ionicons";
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 const PhotoDetailScreen = ({ route }) => {
   // Destructure necessary data from route params
   const { photoUri, photoName, photoDescription, eventId, userId, photoId } =
@@ -20,7 +23,7 @@ const PhotoDetailScreen = ({ route }) => {
   const [comments, setComments] = useState([]);
   const [likeNumber, setLikeNumber] = useState(0);
   const [showAllComments, setShowAllComments] = useState(false);
-const [showCommentInput, setShowCommentInput] = useState(true); // Change to true
+  const [showCommentInput, setShowCommentInput] = useState(true); // Change to true
 
   // Function to handle adding a comment
   const addComment = async () => {
