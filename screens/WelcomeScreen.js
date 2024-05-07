@@ -11,6 +11,7 @@ import {
   Switch,
   Image,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { AuthContext } from "../store/auth-context";
 import { useNavigation } from "@react-navigation/native";
@@ -34,6 +35,9 @@ import firebase from "firebase/app";
 import "firebase/firestore";
 import QRScanner from "./QRScanner";
 import { getAuth } from "firebase/auth";
+import { LogBox } from "react-native";
+LogBox.ignoreLogs(["Warning: ..."]); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 function WelcomeScreen() {
   const authCtx = useContext(AuthContext);
@@ -58,6 +62,8 @@ function WelcomeScreen() {
   const [userEmail, setUserEmail] = useState(null);
   const [username, setUsername] = useState(null);
   const [eventAdded, setEventAdded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const [isOptionModalVisible, setOptionModalVisible] = useState(false);
 
@@ -73,7 +79,6 @@ function WelcomeScreen() {
   const handleJoinEvent = () => {
     toggleOptionModal();
     toggleExistingEventModal();
-
   };
 
   const toggleExistingEventModal = () => {
@@ -148,6 +153,7 @@ function WelcomeScreen() {
       return null;
     }
   };
+
   useEffect(() => {
     if (userId) {
       const fetchEvents = async () => {
@@ -237,6 +243,8 @@ function WelcomeScreen() {
       setEventNameErrorMessage("");
     }
 
+    setIsLoading(true);
+
     await addEventDataToFirestore(); // Wait for adding event data to Firestore
 
     // Fetch events again to update the list with the newly added event
@@ -247,7 +255,8 @@ function WelcomeScreen() {
     setSelectedPhotos([]);
     setSelectedPhotoIndex(null);
     setEventProfilePhoto(null);
-    toggleModal(); // Close the modal after adding the event
+    toggleModal();
+    setIsLoading(false);
   };
 
   const goToProfile = () => {
@@ -310,6 +319,7 @@ function WelcomeScreen() {
     );
     console.log("Matching Event:", matchingEvent); // Add this log to check the value of matchingEvent
     if (matchingEvent) {
+       console.log("We can go inside if on matchinEvent condition:");
       // Add the event to the current user's database with the same ID
       const newDocRef = await setDoc(
         doc(collection(db, `users/${userId}/events`), matchingEvent.id),
@@ -318,6 +328,8 @@ function WelcomeScreen() {
           // You can add additional properties here if needed
         }
       );
+
+      fetchEvents();
       console.log("Event added with ID:", newDocRef.id);
 
       // Fetch the photos subcollection from the existing event
@@ -337,17 +349,22 @@ function WelcomeScreen() {
         // Include the document data when copying the photo
         batch.set(newDocRef, doc.data());
       });
+          
+
       await batch.commit();
 
       setAddEventError("");
       toggleExistingEventModal();
 
       // Refresh the events list
-      fetchEvents();
+     await fetchEvents();
+      setIsLoading(false);
     } else {
       setAddEventError("Event not found. Please enter a valid event ID.");
     }
   };
+
+  
 
   const handleQRScanned = (data) => {
     setExistingEventInput(data); // Update existingEventInput with the scanned data
@@ -382,6 +399,13 @@ function WelcomeScreen() {
           onRequestClose={toggleExistingEventModal}
         >
           <View style={styles.addEventModal}>
+            {isLoading ? ( 
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Event creating...</Text>
+                <ActivityIndicator size="large" color="#0000ff" />
+              </View>
+            ) : (
+              <>
             <QRScanner onQRScanned={handleQRScanned} />
             <TextInput
               style={styles.input}
@@ -406,6 +430,8 @@ function WelcomeScreen() {
                 <Text>Cancel</Text>
               </TouchableOpacity>
             </View>
+             </>
+            )}
           </View>
         </Modal>
 
@@ -457,91 +483,104 @@ function WelcomeScreen() {
           onRequestClose={toggleModal}
         >
           <View style={styles.modalContainer}>
-            <Text style={styles.createEvent}>Create Event</Text>
-            <Text style={styles.inputText}>
-              Event Title <Text style={{ color: "red" }}>*</Text>
-            </Text>
-
-            {eventNameError && (
-              <Text style={styles.errorMessage}>{eventNameErrorMessage}</Text>
-            )}
-            <TextInput
-              style={[styles.input, eventNameError && styles.inputError]}
-              placeholder="GetTogether, wedding, meeting"
-              placeholderTextColor="rgba(0, 0, 0, 0.5)"
-              onChangeText={(text) => {
-                setEventName(text);
-                setEventNameError(false); // Reset error state when user starts typing
-                setEventNameErrorMessage(""); // Reset error message when user starts typing
-              }}
-            />
-
-            <Text style={styles.inputText}>Event Description</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Share your moments!"
-              placeholderTextColor="rgba(0, 0, 0, 0.5)"
-              onChangeText={(text) => setEventDescription(text)}
-            />
-
-            <View style={styles.switchContainer}>
-              <Text style={styles.inputText}>
-                Preferences{" "}
-                <Text style={{ fontSize: 16, fontWeight: "300" }}>
-                  {" "}
-                  (Public or Private)
+            {isLoading ? ( 
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Event creating...</Text>
+                <ActivityIndicator size="large" color="#0000ff" />
+              </View>
+            ) : (
+              <>
+                <Text style={styles.createEvent}>Create Event</Text>
+                <Text style={styles.inputText}>
+                  Event Title <Text style={{ color: "red" }}>*</Text>
                 </Text>
-              </Text>
-              <Switch
-                style={styles.onoffInput}
-                trackColor={{ false: "#767577", true: "#81b0ff" }}
-                thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-              />
-            </View>
 
-            <View>
-              <Text style={styles.inputText}>Add Event Profile Photo</Text>
-              <TouchableOpacity
-                style={styles.eventPhotoButton}
-                onPress={handleImagePicker}
-              >
-                {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
-                  <Image
-                    source={{ uri: eventProfilePhoto }}
-                    style={{ width: 70, height: 70, borderRadius: 50 }}
-                  />
-                ) : (
-                  <Feather
-                    name="upload"
-                    size={30}
-                    color="black"
-                    style={{ marginVertical: 7 }}
-                  />
+                {eventNameError && (
+                  <Text style={styles.errorMessage}>
+                    {eventNameErrorMessage}
+                  </Text>
                 )}
-                <Text style={styles.uploadText}>
-                  <Text style={{ fontWeight: "500" }}>Browse</Text> to Begin
-                  Upload
-                </Text>
-              </TouchableOpacity>
-            </View>
+                <TextInput
+                  style={[styles.input, eventNameError && styles.inputError]}
+                  placeholder="GetTogether, wedding, meeting"
+                  placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                  onChangeText={(text) => {
+                    setEventName(text);
+                    setEventNameError(false); // Reset error state when user starts typing
+                    setEventNameErrorMessage(""); // Reset error message when user starts typing
+                  }}
+                />
 
-            <View style={styles.modalButtonsContainer}>
-              <TouchableOpacity
-                onPress={toggleModal}
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={styles.buttonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={createEvent}
-                style={[styles.button, styles.createButton]}
-              >
-                <Text style={styles.buttonTextCreateEvent}>Create Event</Text>
-              </TouchableOpacity>
-            </View>
+                <Text style={styles.inputText}>Event Description</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Share your moments!"
+                  placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                  onChangeText={(text) => setEventDescription(text)}
+                />
+
+                <View style={styles.switchContainer}>
+                  <Text style={styles.inputText}>
+                    Preferences{" "}
+                    <Text style={{ fontSize: 16, fontWeight: "300" }}>
+                      {" "}
+                      (Public or Private)
+                    </Text>
+                  </Text>
+                  <Switch
+                    style={styles.onoffInput}
+                    trackColor={{ false: "#767577", true: "#81b0ff" }}
+                    thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
+                    ios_backgroundColor="#3e3e3e"
+                    onValueChange={toggleSwitch}
+                    value={isEnabled}
+                  />
+                </View>
+
+                <View>
+                  <Text style={styles.inputText}>Add Event Profile Photo</Text>
+                  <TouchableOpacity
+                    style={styles.eventPhotoButton}
+                    onPress={handleImagePicker}
+                  >
+                    {eventProfilePhoto && eventProfilePhoto.length > 0 ? (
+                      <Image
+                        source={{ uri: eventProfilePhoto }}
+                        style={{ width: 70, height: 70, borderRadius: 50 }}
+                      />
+                    ) : (
+                      <Feather
+                        name="upload"
+                        size={30}
+                        color="black"
+                        style={{ marginVertical: 7 }}
+                      />
+                    )}
+                    <Text style={styles.uploadText}>
+                      <Text style={{ fontWeight: "500" }}>Browse</Text> to Begin
+                      Upload
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalButtonsContainer}>
+                  <TouchableOpacity
+                    onPress={toggleModal}
+                    style={[styles.button, styles.cancelButton]}
+                  >
+                    <Text style={styles.buttonTextCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={createEvent}
+                    style={[styles.button, styles.createButton]}
+                  >
+                    <Text style={styles.buttonTextCreateEvent}>
+                      Create Event
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         </Modal>
       </ScrollView>
@@ -799,6 +838,16 @@ const styles = StyleSheet.create({
   buttonTextCreateEvent: {
     color: "white",
     fontSize: 18,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 20,
+    marginBottom: 20,
   },
 });
 

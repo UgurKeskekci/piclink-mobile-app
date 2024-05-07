@@ -45,6 +45,9 @@ import {
   storePhotosInFirestore,
   uploadPhotoToStorage,
 } from "./FirebaseUtils";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 const GuestScreen = ({ route }) => {
   const { eventId } = route.params; // Get eventId from route params

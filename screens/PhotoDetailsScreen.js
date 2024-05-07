@@ -10,6 +10,9 @@ import {
 import { db } from "../config"; // Import your Firebase Firestore configuration
 import Icon from "react-native-vector-icons/Ionicons";
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 const PhotoDetailScreen = ({ route }) => {
   // Destructure necessary data from route params
   const { photoUri, photoName, photoDescription, eventId, userId, photoId } =

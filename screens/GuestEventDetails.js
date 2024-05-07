@@ -32,7 +32,9 @@ import { AntDesign } from "@expo/vector-icons";
 import { fetchPhotosFromFirebase, fetchPhotosFromStorage, storePhotosInFirestore, uploadPhotoToStorage } from "./FirebaseUtils";
 
 
-
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 const GuestEventDetailsScreen = ({ route }) => {
   // Destructure route parameters
   const { eventId, eventDescription, eventName, eventPhoto } = route.params;

@@ -17,6 +17,9 @@ import GuestEventDetailsScreen from "./screens/GuestEventDetails";
 import { Colors } from "./constants/styles";
 import AuthContextProvider, { AuthContext } from "./store/auth-context";
 import IconButton from "./components/ui/IconButton";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 const Stack = createNativeStackNavigator();
 

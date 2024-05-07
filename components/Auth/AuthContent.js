@@ -18,6 +18,9 @@ import AuthForm from "./AuthForm";
 import { Colors } from "../../constants/styles";
 import QRScanner from "../../screens/QRScanner"; // Import your QRScanner component
 import GuestScreen from "../../screens/GuestScreen";
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
 
 function AuthContent({ isLogin, onAuthenticate }) {
   const navigation = useNavigation();
