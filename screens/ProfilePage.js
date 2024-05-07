@@ -238,7 +238,7 @@ const ProfilePage = () => {
         >
           {/* Add icon here if needed */}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton} onPress={goToProfile}>
+        <TouchableOpacity style={styles.navButton} onPress={goToProfile} disabled>
           <Icon name="person" size={35} color="white" />
         </TouchableOpacity>
       </View>
