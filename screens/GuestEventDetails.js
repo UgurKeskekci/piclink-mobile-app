@@ -316,16 +316,7 @@ const GuestEventDetailsScreen = ({ route }) => {
           {gridImages.map((imageData, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => {
-                navigation.navigate("PhotoDetail", {
-                  photoUri: imageData.accessUrl,
-                  photoName: "Username",
-                  photoDescription: "Example Description",
-                  eventId: eventId,
-                  userId: userId,
-                  photoId: imageData.photoId,
-                });
-              }}
+              onPress={handleSignUpModal}
               style={styles.gridItem}
             >
               <Image
