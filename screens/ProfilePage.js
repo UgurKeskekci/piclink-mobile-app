@@ -181,8 +181,9 @@ const ProfilePage = () => {
         )}
       </TouchableOpacity>
       <View style={styles.textContainer}>
-        <Text style={styles.username}>Username: {username}</Text>
-        <Text style={styles.userInfo}>Email: {userEmail}</Text>
+        
+        <Text style={styles.username}><Icon name="person-outline" size={20} /> : {username}</Text>
+        <Text style={styles.userInfo}><Icon name="mail-outline" size={20} /> : {userEmail}</Text>
       </View>
       </View>
       <View style={styles.inputContainer}>

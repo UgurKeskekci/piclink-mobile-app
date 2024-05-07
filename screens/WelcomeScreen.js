@@ -574,6 +574,7 @@ function WelcomeScreen() {
           </View>
         </Modal>
       </ScrollView>
+      
       <Modal
         animationType="slide"
         transparent={true}
@@ -581,17 +582,20 @@ function WelcomeScreen() {
         onRequestClose={toggleOptionModal}
       >
         <View style={styles.optionModalContainer}>
+          <TouchableOpacity style={styles.closeButton} onPress={toggleOptionModal}>
+            <Text style={styles.closeButtonText}>X</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.optionButton}
             onPress={handleCreateEvent}
           >
-            <Text>Create Event</Text>
+            <Text style={styles.optionModalText}>Create Event</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.optionButton}
             onPress={handleJoinEvent}
           >
-            <Text>Join Event</Text>
+            <Text style={styles.optionModalText}>Join Event</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -661,20 +665,33 @@ const styles = StyleSheet.create({
   },
   optionModalContainer: {
     position: "absolute",
-    bottom: 50,
+    bottom: "8.5%",
     width: "100%",
-    backgroundColor: "white",
+    height: "18%",
+    backgroundColor: "#cbd7f3",
     paddingVertical: 20,
     paddingHorizontal: 10,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    elevation: 5, // Add elevation for Android shadow effect
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    justifyContent: "center",
+  },
+  optionModalText: {
+   fontSize: 16,
   },
   optionButton: {
     alignItems: "center",
     paddingVertical: 15,
+    
   },
-
+  closeButton: {
+    position: 'absolute',
+    right: "10%",
+    top: '10%', 
+  },
+  closeButtonText: {
+    fontSize: 22,
+    color: 'black',
+  },
   eventItem: {
     width: "45%",
     height: 150,
@@ -800,6 +817,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
+    
   },
   cancelButton: {
     width: "48%",
