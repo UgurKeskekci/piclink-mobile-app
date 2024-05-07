@@ -27,8 +27,9 @@ import {
   addDoc,
   getDoc,
   getDocs,
-  doc,
   setDoc,
+  writeBatch,
+  doc,
 } from "firebase/firestore";
 import firebase from "firebase/app";
 import "firebase/firestore";
@@ -213,8 +214,7 @@ function WelcomeScreen() {
       });
       console.log("Event added with ID: ", eventDocRef.id);
 
-      // Create a subcollection named "photos" for the event
-      // Create a subcollection named "photos" for the event
+  
       const photosCollectionRef = collection(
         db,
         `users/${userId}/events/${eventDocRef.id}/photos`
@@ -294,7 +294,7 @@ function WelcomeScreen() {
 
   const addExistingEvent = async () => {
     const enteredEventId = existingEventInput.trim();
-
+  
     // Fetch the existing event
     const eventsQuery = collectionGroup(db, "events");
     const snapshot = await getDocs(eventsQuery);
@@ -303,51 +303,49 @@ function WelcomeScreen() {
       userId: doc.ref.parent.parent.id, // Get the user ID
       ...doc.data(),
     }));
-
+  
     // Find the matching event
     const matchingEvent = allEvents.find(
       (event) => event.id === enteredEventId
     );
-    console.log("Matching Event:", matchingEvent); // Add this log to check the value of matchingEvent
+  
     if (matchingEvent) {
-      // Add the event to the current user's database with the same ID
-      const newDocRef = await setDoc(
-        doc(collection(db, `users/${userId}/events`), matchingEvent.id),
-        {
-          ...matchingEvent, // Include all properties of the existing event
-          // You can add additional properties here if needed
-        }
-      );
-      console.log("Event added with ID:", newDocRef.id);
-
-      // Fetch the photos subcollection from the existing event
-      const photosQuery = collection(
-        db,
-        `users/${matchingEvent.userId}/events/${matchingEvent.id}/photos`
-      );
-      const photosSnapshot = await getDocs(photosQuery);
-
-      // Copy each document in the photos subcollection to the current user's database
-      const batch = writeBatch(db);
-      photosSnapshot.forEach((doc) => {
-        const newDocRef = doc(
-          collection(db, `users/${userId}/events/${matchingEvent.id}/photos`),
-          doc.id
+      try {
+        // Add the event to the current user's database with the same ID
+        console.log(matchingEvent.id);
+        console.log(userId);
+        const newDocRef = await setDoc(
+          
+          doc(collection(db, `users/${userId}/events`), matchingEvent.id),
+          {
+            ...matchingEvent, // Include all properties of the existing event
+            // You can add additional properties here if needed
+          }
         );
-        // Include the document data when copying the photo
-        batch.set(newDocRef, doc.data());
-      });
-      await batch.commit();
-
-      setAddEventError("");
-      toggleExistingEventModal();
-
-      // Refresh the events list
-      fetchEvents();
+        console.log("Event added with ID:", newDocRef);
+      
+  
+        // Fetch the photos subcollection from the existing event
+        
+     
+  
+        // Copy each document in the photos subcollection to the current user's database
+     
+  
+        setAddEventError("");
+        toggleExistingEventModal();
+  
+        // Update the events state to include the newly added event
+        setEvents((prevEvents) => [...prevEvents, matchingEvent]);
+      } catch (error) {
+        console.error("Error adding existing event: ", error);
+        setAddEventError("Failed to add event. Please try again later.");
+      }
     } else {
       setAddEventError("Event not found. Please enter a valid event ID.");
     }
   };
+  
 
   const handleQRScanned = (data) => {
     setExistingEventInput(data); // Update existingEventInput with the scanned data
